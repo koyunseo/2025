@@ -1,11 +1,22 @@
 import streamlit as st
 
-st.set_page_config(page_title="MBTI 직업 추천", page_icon="💼", layout="centered")
+st.set_page_config(page_title="MBTI 직업 추천", page_icon="💖", layout="centered")
 
-st.title("MBTI 기반 진로 추천 웹앱 💡")
-st.write("당신의 MBTI를 선택하면 어울리는 직업을 추천해 드립니다!")
+# ---------- 페이지 상단 ----------
+st.markdown(
+    """
+    <h1 style='text-align: center; color: #FF69B4; font-family: "Comic Sans MS", cursive;'>
+        ✨ MBTI로 알아보는 찰떡 직업 추천 ✨
+    </h1>
+    <p style='text-align: center; color: #FF1493; font-size:18px;'>
+        귀여운 MBTI별 직업 추천! 나에게 맞는 진로를 찾아볼까요? 🌈
+    </p>
+    <hr style='border: 2px solid #FFB6C1;'>
+    """,
+    unsafe_allow_html=True
+)
 
-# MBTI 데이터 (간단 예시)
+# ---------- 직업 데이터 ----------
 job_dict = {
     "INTJ": ["데이터 과학자", "경영 전략가", "AI 연구원", "변리사", "건축가"],
     "INTP": ["프로그래머", "시스템 설계자", "연구원", "발명가", "UX 엔지니어"],
@@ -25,17 +36,57 @@ job_dict = {
     "ESFP": ["배우", "방송인", "이벤트 플래너", "여행 크리에이터", "공연 기획자"]
 }
 
-# 입력
-mbti_list = list(job_dict.keys())
-selected_mbti = st.selectbox("당신의 MBTI를 선택하세요", mbti_list)
+# ---------- 직업별 아이콘 매핑 ----------
+icon_dict = {
+    "데이터 과학자": "💻", "프로그래머": "👨‍💻", "AI 연구원": "🤖", "연구원": "🔬",
+    "CEO": "👔", "경영 전략가": "📊", "투자은행가": "💰", "경영 컨설턴트": "📈",
+    "변호사": "⚖️", "법률 사무관": "📜", "공무원": "🏛️", "군인": "🎖️",
+    "상담사": "🗣️", "심리학자": "🧠", "교사": "📚", "교육자": "🏫",
+    "작가": "✍️", "콘텐츠 크리에이터": "🎥", "예술가": "🎨", "음악가": "🎵",
+    "간호사": "🏥", "사회복지사": "🤝", "HR 담당자": "👥", "행정직": "🗂️",
+    "배우": "🎬", "방송인": "📺", "이벤트 기획자": "🎉", "이벤트 플래너": "🎉",
+    "여행 크리에이터": "🌍", "프로게이머": "🎮", "파일럿": "✈️",
+    "패션 디자이너": "👗", "사진작가": "📸", "요리사": "🍳", "플로리스트": "💐",
+    "세일즈 전문가": "🤝", "부동산 투자자": "🏢", "스포츠 에이전트": "⚽",
+    "트레이너": "💪", "제품 매니저": "🛠️", "홍보 전문가": "📢", "광고 기획자": "🖌️",
+    "스타트업 창업가": "🚀", "혁신 연구원": "💡", "VC": "🏦",
+    "운영 관리자": "🛠️", "기업 관리자": "🏢", "공공기관 관리자": "🏛️",
+    "영업 관리": "📞", "사회사업가": "🤲", "비서": "📎",
+    "보안 전문가": "🔒", "자동차 정비사": "🔧", "기계 엔지니어": "⚙️",
+    "발명가": "💡", "UX 엔지니어": "📱", "리더십 코치": "🏆", "외교관": "🌐",
+    "인권 활동가": "✊", "예능 PD": "🎥"
+}
 
-# 결과 출력
+# ---------- 입력 ----------
+st.markdown(
+    "<h3 style='color: #FF69B4; text-align:center;'>당신의 MBTI를 골라보세요 💌</h3>",
+    unsafe_allow_html=True
+)
+selected_mbti = st.selectbox("MBTI 선택", list(job_dict.keys()), index=0)
+
+# ---------- 결과 출력 ----------
 if selected_mbti:
-    st.subheader(f"🌟 {selected_mbti} 유형 추천 직업")
+    st.markdown(
+        f"<h2 style='color:#FF1493;text-align:center;'>🌟 {selected_mbti} 유형 추천 직업 🌟</h2>",
+        unsafe_allow_html=True
+    )
     for job in job_dict[selected_mbti]:
-        st.markdown(f"- **{job}**")
+        icon = icon_dict.get(job, "💖")
+        st.markdown(
+            f"<div style='background-color:#FFF0F5;padding:10px;margin:8px;border-radius:10px;"
+            f"border:1px solid #FFB6C1;font-size:18px;'>"
+            f"{icon} <b>{job}</b></div>",
+            unsafe_allow_html=True
+        )
 
-# 추가 기능: 결과 저장
-if st.button("추천 결과 PDF로 저장"):
-    st.info("PDF 저장 기능은 추가 개발이 필요합니다!")  # 여기엔 reportlab 같은 라이브러리 사용
-
+# ---------- 하단 문구 ----------
+st.markdown(
+    """
+    <hr style='border: 2px solid #FFB6C1;'>
+    <p style='text-align:center; color:#FF69B4; font-size:16px;'>
+        Made with ❤️ using Streamlit <br>
+        <small>진로 상담, 학교 프로젝트, 교육용으로 자유롭게 활용하세요!</small>
+    </p>
+    """,
+    unsafe_allow_html=True
+)
