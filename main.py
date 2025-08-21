@@ -6,7 +6,7 @@ st.set_page_config(page_title="MBTI 직업 추천", page_icon="💖", layout="ce
 st.markdown(
     """
     <h1 style='text-align: center; color: #FF69B4; font-family: "Comic Sans MS", cursive;'>
-        ✨ MBTI로 알아보는 찰떡 직업 추천 ✨
+        ✨ MBTI로 보는 찰떡 직업 추천 ✨
     </h1>
     <p style='text-align: center; color: #FF1493; font-size:18px;'>
         귀여운 MBTI별 직업 추천! 나에게 맞는 진로를 찾아볼까요? 🌈
