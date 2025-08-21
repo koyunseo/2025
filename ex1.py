@@ -1,2 +1,2 @@
 import streamlit as st
-st.title('스트림릿')
+st.title('듀듀듀바바바듀듀듀')
