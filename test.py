@@ -5,8 +5,10 @@ import os
 st.set_page_config(page_title="나의 블로그", layout="centered")
 
 # -------------------------------
-# 0. 폰트 선택
+# 0. 블로그 제목과 폰트 선택
 # -------------------------------
+blog_title = st.sidebar.text_input("블로그 제목 입력", value="나의 블로그")
+
 font_options = [
     "Nanum Gothic",
     "Noto Sans KR",
@@ -14,7 +16,6 @@ font_options = [
     "Open Sans",
     "M PLUS Rounded 1c"
 ]
-
 selected_font = st.sidebar.selectbox("블로그 폰트 선택", font_options)
 
 # Google Fonts 적용
@@ -51,7 +52,7 @@ else:
 # -------------------------------
 # 블로그 헤더
 # -------------------------------
-st.title("나의 블로그")
+st.title(blog_title)
 st.write("개발 · 일상 · 기록")
 st.markdown("---")
 
