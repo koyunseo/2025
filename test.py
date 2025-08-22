@@ -85,3 +85,24 @@ elif menu == "글 작성":
                 df = pd.concat([df, new_row], ignore_index=True)
                 df.to_csv(FILE_PATH, index=False)
                 st.success("글이 저장되었습니다! 왼쪽 메뉴에서 확인하세요.")
+
+import streamlit as st
+
+st.set_page_config(page_title="폰트 선택 블로그")
+
+st.title("내 블로그")
+
+# Google Fonts URL 입력
+font_name = st.text_input("사용할 Google Fonts 이름을 입력하세요 (예: Nanum Gothic)")
+if font_name:
+    font_css = f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family={font_name.replace(" ", "+")}&display=swap');
+    html, body, [class*="css"]  {{
+        font-family: '{font_name}', sans-serif;
+    }}
+    </style>
+    """
+    st.markdown(font_css, unsafe_allow_html=True)
+
+st.write("폰트 적용 예시입니다.")
