@@ -93,8 +93,7 @@ elif menu == "글 작성":
         list_choice = st.selectbox("목록 선택", ["(새 목록 추가)"] + existing_lists)
 
         new_list = ""
-        if list_choice == "(새 목록 추가)":
-            new_list = st.text_input("새 목록 입력")
+        if list_choice == "(새 목록 추가)"
 
         title = st.text_input("글 제목")
         body = st.text_area("글 내용", height=200)
