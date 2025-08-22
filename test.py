@@ -4,6 +4,31 @@ import os
 
 st.set_page_config(page_title="나의 블로그", layout="centered")
 
+import streamlit as st
+import pandas as pd
+import os
+
+st.set_page_config(page_title="나의 블로그", layout="centered")
+
+FILE_PATH = "posts.csv"
+
+# CSV 불러오기 → 컬럼 없으면 새로 생성
+if os.path.exists(FILE_PATH):
+    try:
+        df = pd.read_csv(FILE_PATH)
+        # 필수 컬럼 확인
+        for col in ["category", "title", "body"]:
+            if col not in df.columns:
+                raise ValueError("CSV 구조 불일치")
+        # 혹시 다른 컬럼만 있으면 덮어쓰기
+        df = df[["category", "title", "body"]]
+    except Exception:
+        df = pd.DataFrame(columns=["category", "title", "body"])
+        df.to_csv(FILE_PATH, index=False)
+else:
+    df = pd.DataFrame(columns=["category", "title", "body"])
+    df.to_csv(FILE_PATH, index=False)
+
 # -------------------------------
 # 1. CSV 불러오기 또는 새로 생성
 # -------------------------------
