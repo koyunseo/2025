@@ -5,15 +5,25 @@ import os
 st.set_page_config(page_title="나의 블로그", layout="centered")
 
 # -------------------------------
-# 0. 사용자 폰트 입력 (Google Fonts)
+# 0. 폰트 선택
 # -------------------------------
-font_name = st.sidebar.text_input("원하는 Google Fonts 이름 입력", value="Nanum Gothic")
-if font_name:
+font_options = [
+    "Nanum Gothic",
+    "Noto Sans KR",
+    "Roboto",
+    "Open Sans",
+    "M PLUS Rounded 1c"
+]
+
+selected_font = st.sidebar.selectbox("블로그 폰트 선택", font_options)
+
+# Google Fonts 적용
+if selected_font:
     font_css = f"""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family={font_name.replace(' ', '+')}&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family={selected_font.replace(' ', '+')}&display=swap');
     html, body, [class*="css"] {{
-        font-family: '{font_name}', sans-serif;
+        font-family: '{selected_font}', sans-serif;
     }}
     </style>
     """
