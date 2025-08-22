@@ -5,9 +5,10 @@ import os
 st.set_page_config(page_title="나의 블로그", layout="centered")
 
 # -------------------------------
-# 0. 블로그 제목과 폰트 선택
+# 0. 블로그 제목, 소개 문구, 폰트 선택
 # -------------------------------
 blog_title = st.sidebar.text_input("블로그 제목 입력", value="나의 블로그")
+blog_intro = st.sidebar.text_input("블로그 소개 문구 입력", value="개발 · 일상 · 기록")
 
 font_options = [
     "Nanum Gothic",
@@ -53,7 +54,7 @@ else:
 # 블로그 헤더
 # -------------------------------
 st.title(blog_title)
-st.write("개발 · 일상 · 기록")
+st.write(blog_intro)  # 이제 사이드바 입력값 반영
 st.markdown("---")
 
 # -------------------------------
@@ -92,6 +93,10 @@ elif menu == "글 작성":
     with st.form("post_form"):
         existing_lists = sorted(df["category"].dropna().unique().tolist())
         list_choice = st.selectbox("목록 선택", ["(새 목록 추가)"] + existing_lists)
+
+        new_list = ""
+        if list_choice == "(새 목록 추가)":
+            new_list = st.text_input("새 목록 입력")
 
         title = st.text_input("글 제목")
         body = st.text_area("글 내용", height=200)
