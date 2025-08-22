@@ -92,9 +92,6 @@ elif menu == "글 작성":
         existing_lists = sorted(df["category"].dropna().unique().tolist())
         list_choice = st.selectbox("목록 선택", ["(새 목록 추가)"] + existing_lists)
 
-        new_list = ""
-        if list_choice == "(새 목록 추가)"
-
         title = st.text_input("글 제목")
         body = st.text_area("글 내용", height=200)
         submitted = st.form_submit_button("저장하기")
