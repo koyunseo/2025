@@ -5,12 +5,17 @@ import os
 st.set_page_config(page_title="나의 블로그", layout="centered")
 
 # -------------------------------
-# 1. 글 데이터 불러오기 / 초기화
+# 1. CSV 불러오기 또는 새로 생성
 # -------------------------------
 FILE_PATH = "posts.csv"
 
+# CSV 읽기
 if os.path.exists(FILE_PATH):
-    df = pd.read_csv(FILE_PATH)
+    try:
+        df = pd.read_csv(FILE_PATH)
+    except Exception:
+        df = pd.DataFrame(columns=["category", "title", "body"])
+        df.to_csv(FILE_PATH, index=False)
 else:
     df = pd.DataFrame(columns=["category", "title", "body"])
     df.to_csv(FILE_PATH, index=False)
@@ -34,15 +39,17 @@ if menu == "글 목록":
     if len(df) == 0:
         st.info("아직 작성된 글이 없습니다. 왼쪽 메뉴에서 글을 작성하세요!")
     else:
-        # 카테고리 필터
+        # 카테고리 필터 옵션 준비
         categories = ["전체"] + sorted(df["category"].dropna().unique().tolist())
         selected_cat = st.selectbox("카테고리 선택", categories)
 
+        # 필터 적용
         if selected_cat != "전체":
             filtered_df = df[df["category"] == selected_cat]
         else:
             filtered_df = df
 
+        # 글 목록 표시
         if len(filtered_df) == 0:
             st.warning("선택한 카테고리에 글이 없습니다.")
         else:
@@ -60,24 +67,25 @@ if menu == "글 목록":
 elif menu == "글 작성":
     st.subheader("새 글 작성")
     with st.form("post_form"):
-        # 카테고리 입력
+        # 기존 카테고리 목록
         existing_cats = sorted(df["category"].dropna().unique().tolist())
-        category = st.selectbox("기존 카테고리 선택 (또는 새로 입력)", ["새 카테고리"] + existing_cats)
-        if category == "새 카테고리":
+        # 첫 번째 옵션: 새 카테고리
+        category_choice = st.selectbox("카테고리 선택", ["(새 카테고리 추가)"] + existing_cats)
+
+        new_category = ""
+        if category_choice == "(새 카테고리 추가)":
             new_category = st.text_input("새 카테고리 입력")
-            final_category = new_category.strip()
-        else:
-            final_category = category
 
         title = st.text_input("글 제목")
         body = st.text_area("글 내용", height=200)
         submitted = st.form_submit_button("저장하기")
 
         if submitted:
+            final_category = new_category.strip() if category_choice == "(새 카테고리 추가)" else category_choice
             if final_category == "" or title.strip() == "" or body.strip() == "":
                 st.warning("카테고리, 제목, 내용을 모두 입력하세요.")
             else:
-                new_row = pd.DataFrame([[final_category, title, body]], 
+                new_row = pd.DataFrame([[final_category, title.strip(), body.strip()]],
                                        columns=["category", "title", "body"])
                 df = pd.concat([df, new_row], ignore_index=True)
                 df.to_csv(FILE_PATH, index=False)
