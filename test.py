@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import base64
 
+# 페이지 설정
 st.set_page_config(page_title="친구 공유 블로그", layout="wide")
 
 DATA_FILE = "posts.csv"
@@ -13,7 +14,7 @@ if os.path.exists(DATA_FILE):
 else:
     df = pd.DataFrame(columns=["title", "content", "category", "image"])
 
-# ----- 블로그 기본 설정 -----
+# ----- 블로그 설정 -----
 st.sidebar.header("블로그 설정")
 blog_title = st.sidebar.text_input("블로그 제목", "친구 공유 블로그")
 font_option = st.sidebar.selectbox(
