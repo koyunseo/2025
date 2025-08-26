@@ -1,75 +1,126 @@
 import streamlit as st
 import pandas as pd
 import os
-import base64
 
-st.set_page_config(page_title="친구 공유 블로그", layout="wide")
+st.set_page_config(page_title="나의 블로그", layout="centered")
 
-DATA_FILE = "posts.csv"
+# -------------------------------
+# 0. 블로그 제목, 소개 문구, 폰트 및 스타일 선택
+# -------------------------------
+blog_title = st.sidebar.text_input("블로그 제목 입력", value="나의 블로그")
+blog_intro = st.sidebar.text_input("블로그 소개 문구 입력", value="개발 · 일상 · 기록")
 
-# CSV 불러오기 또는 새 생성
-if os.path.exists(DATA_FILE):
-    df = pd.read_csv(DATA_FILE)
+font_options = [
+    "Nanum Gothic",
+    "Noto Sans KR",
+    "Roboto",
+    "Open Sans",
+    "M PLUS Rounded 1c"
+]
+selected_font = st.sidebar.selectbox("블로그 폰트 선택", font_options)
+
+# 소개 문구 스타일 선택
+intro_color = st.sidebar.color_picker("소개 문구 색상 선택", value="#555555")
+intro_size = st.sidebar.slider("소개 문구 글자 크기 (px)", min_value=12, max_value=40, value=18)
+intro_align = st.sidebar.radio("소개 문구 정렬", ["left", "center", "right"], index=1)
+
+# Google Fonts 적용
+if selected_font:
+    font_css = f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family={selected_font.replace(' ', '+')}&display=swap');
+    html, body, [class*="css"] {{
+        font-family: '{selected_font}', sans-serif;
+    }}
+    </style>
+    """
+    st.markdown(font_css, unsafe_allow_html=True)
+
+# -------------------------------
+# 1. CSV 불러오기 또는 새로 생성
+# -------------------------------
+FILE_PATH = "posts.csv"
+
+if os.path.exists(FILE_PATH):
+    try:
+        df = pd.read_csv(FILE_PATH)
+        for col in ["category", "title", "body"]:
+            if col not in df.columns:
+                raise ValueError("CSV 구조 불일치")
+        df = df[["category", "title", "body"]]
+    except Exception:
+        df = pd.DataFrame(columns=["category", "title", "body"])
+        df.to_csv(FILE_PATH, index=False)
 else:
-    df = pd.DataFrame(columns=["title", "content", "category", "image"])
+    df = pd.DataFrame(columns=["category", "title", "body"])
+    df.to_csv(FILE_PATH, index=False)
 
-# ----- 블로그 설정 -----
-st.sidebar.header("블로그 설정")
-blog_title = st.sidebar.text_input("블로그 제목", "친구 공유 블로그")
-font_option = st.sidebar.selectbox(
-    "폰트 선택",
-    ["Nanum Gothic", "Noto Sans KR", "Roboto", "Song Myung", "Gamja Flower"]
-)
-st.markdown(f"""
-<style>
-@import url('https://fonts.googleapis.com/css2?family={font_option.replace(' ', '+')}&display=swap');
-html, body, [class*="css"] {{
-    font-family: '{font_option}', sans-serif;
-}}
-</style>
-""", unsafe_allow_html=True)
+# -------------------------------
+# 블로그 헤더
+# -------------------------------
 st.title(blog_title)
 
-# ----- 새 글 작성 -----
-st.subheader("새 글 작성")
-with st.form("write_form"):
-    new_title = st.text_input("제목")
-    new_content = st.text_area("내용")
-    new_category = st.text_input("카테고리")
-    new_image = st.file_uploader("이미지 업로드", type=["png", "jpg", "jpeg"])
-    submitted = st.form_submit_button("글 저장하기")
-    
-    if submitted:
-        image_data = ""
-        if new_image:
-            image_data = base64.b64encode(new_image.read()).decode()
-        new_post = pd.DataFrame([{
-            "title": new_title,
-            "content": new_content,
-            "category": new_category,
-            "image": image_data
-        }])
-        df = pd.concat([df, new_post], ignore_index=True)
-        df.to_csv(DATA_FILE, index=False)
-        st.success("글이 저장되었습니다! 새로고침 후 확인하세요.")
+# HTML 스타일로 소개 문구 출력
+intro_html = f"""
+<p style='color:{intro_color}; font-size:{intro_size}px; text-align:{intro_align}; margin-bottom:20px;'>
+{blog_intro}
+</p>
+"""
+st.markdown(intro_html, unsafe_allow_html=True)
+st.markdown("---")
 
-# ----- 카테고리 필터 -----
-st.sidebar.subheader("목록 선택")
-categories = ["전체"] + sorted(df["category"].dropna().unique().tolist())
-selected_category = st.sidebar.selectbox("보기", categories)
+# -------------------------------
+# 메뉴 선택
+# -------------------------------
+menu = st.sidebar.radio("메뉴", ["글 목록", "글 작성"])
 
-if selected_category != "전체":
-    display_df = df[df["category"] == selected_category]
-else:
-    display_df = df
+# -------------------------------
+# 글 목록 보기
+# -------------------------------
+if menu == "글 목록":
+    if len(df) == 0:
+        st.info("아직 작성된 글이 없습니다. 왼쪽 메뉴에서 글을 작성하세요!")
+    else:
+        lists = ["전체"] + sorted(df["category"].dropna().unique().tolist())
+        selected_list = st.selectbox("목록 선택", lists)
 
-# ----- 글 출력 -----
-st.subheader("블로그 글")
-if display_df.empty:
-    st.info("아직 작성된 글이 없습니다.")
-else:
-    for i, row in display_df.iterrows():
-        st.markdown(f"### {row['title']}")
-        st.markdown(row['content'])
-        if row['image']:
-            st.image(base64.b64decode(row['image']), use_column_width=True)
+        filtered_df = df if selected_list == "전체" else df[df["category"] == selected_list]
+
+        if len(filtered_df) == 0:
+            st.warning("선택한 목록에 글이 없습니다.")
+        else:
+            titles = filtered_df["title"].tolist()
+            choice = st.selectbox("읽고 싶은 글을 선택하세요", titles)
+            if choice:
+                row = filtered_df[filtered_df["title"] == choice].iloc[0]
+                st.subheader(row["title"])
+                st.caption(f"목록: {row['category']}")
+                st.write(row["body"])
+
+# -------------------------------
+# 글 작성하기
+# -------------------------------
+elif menu == "글 작성":
+    st.subheader("새 글 작성")
+    with st.form("post_form"):
+        existing_lists = sorted(df["category"].dropna().unique().tolist())
+        list_choice = st.selectbox("목록 선택", ["(새 목록 추가)"] + existing_lists)
+
+        new_list = ""
+        if list_choice == "(새 목록 추가)":
+            new_list = st.text_input("새 목록 입력")
+
+        title = st.text_input("글 제목")
+        body = st.text_area("글 내용", height=200)
+        submitted = st.form_submit_button("저장하기")
+
+        if submitted:
+            final_list = new_list.strip() if list_choice == "(새 목록 추가)" else list_choice
+            if final_list == "" or title.strip() == "" or body.strip() == "":
+                st.warning("목록, 제목, 내용을 모두 입력하세요.")
+            else:
+                new_row = pd.DataFrame([[final_list, title.strip(), body.strip()]],
+                                       columns=["category", "title", "body"])
+                df = pd.concat([df, new_row], ignore_index=True)
+                df.to_csv(FILE_PATH, index=False)
+                st.success("글이 저장되었습니다! 왼쪽 메뉴에서 확인하세요.")
