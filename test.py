@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+from datetime import datetime
 
 st.set_page_config(page_title="나의 블로그", layout="centered")
 
@@ -9,12 +10,16 @@ st.set_page_config(page_title="나의 블로그", layout="centered")
 # -------------------------------
 POST_FILE = "posts.csv"
 DESIGN_FILE = "design.csv"
+UPLOAD_FOLDER = "uploads"
 
 # -------------------------------
-# CSV 초기화
+# 폴더/파일 초기화
 # -------------------------------
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
 if not os.path.exists(POST_FILE):
-    pd.DataFrame(columns=["category", "title", "body"]).to_csv(POST_FILE, index=False)
+    pd.DataFrame(columns=["category", "title", "body", "image"]).to_csv(POST_FILE, index=False)
 
 if not os.path.exists(DESIGN_FILE):
     pd.DataFrame([{
@@ -56,9 +61,13 @@ if selected_font:
 menu = st.sidebar.radio("메뉴", ["글 목록", "글 작성", "관리자 모드"])
 
 # -------------------------------
-# 글 목록 페이지
+# CSV 로드
 # -------------------------------
 df = pd.read_csv(POST_FILE)
+
+# -------------------------------
+# 글 목록 페이지
+# -------------------------------
 if menu == "글 목록":
     st.title(blog_title)
     st.write(blog_intro)
@@ -75,13 +84,15 @@ if menu == "글 목록":
             titles = filtered_df["title"].tolist()
             choice = st.selectbox("읽고 싶은 글을 선택하세요", titles)
             if choice:
-                row = filtered_df[df["title"] == choice].iloc[0]
+                row = filtered_df[filtered_df["title"] == choice].iloc[0]
                 st.subheader(row["title"])
                 st.caption(f"목록: {row['category']}")
+                if pd.notna(row["image"]) and row["image"] != "":
+                    st.image(row["image"], use_column_width=True)
                 st.write(row["body"])
 
 # -------------------------------
-# 글 작성 페이지
+# 글 작성 페이지 (이미지 업로드 추가)
 # -------------------------------
 elif menu == "글 작성":
     st.subheader("새 글 작성")
@@ -93,20 +104,29 @@ elif menu == "글 작성":
             new_list = st.text_input("새 목록 입력")
         title = st.text_input("글 제목")
         body = st.text_area("글 내용", height=200)
+        uploaded_image = st.file_uploader("이미지 업로드 (선택)", type=["jpg", "jpeg", "png", "gif"])
         submitted = st.form_submit_button("저장하기")
+
         if submitted:
             final_list = new_list.strip() if list_choice == "(새 목록 추가)" else list_choice
             if final_list == "" or title.strip() == "" or body.strip() == "":
                 st.warning("목록, 제목, 내용을 모두 입력하세요.")
             else:
-                new_row = pd.DataFrame([[final_list, title.strip(), body.strip()]],
-                                       columns=["category", "title", "body"])
+                image_path = ""
+                if uploaded_image is not None:
+                    filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{uploaded_image.name}"
+                    image_path = os.path.join(UPLOAD_FOLDER, filename)
+                    with open(image_path, "wb") as f:
+                        f.write(uploaded_image.getbuffer())
+
+                new_row = pd.DataFrame([[final_list, title.strip(), body.strip(), image_path]],
+                                       columns=["category", "title", "body", "image"])
                 df = pd.concat([df, new_row], ignore_index=True)
                 df.to_csv(POST_FILE, index=False)
                 st.success("글이 저장되었습니다! 왼쪽 메뉴에서 확인하세요.")
 
 # -------------------------------
-# 관리자 모드 페이지
+# 관리자 모드 (변경 없음)
 # -------------------------------
 elif menu == "관리자 모드":
     st.subheader("관리자 로그인")
