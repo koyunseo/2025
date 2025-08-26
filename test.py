@@ -5,7 +5,7 @@ import os
 st.set_page_config(page_title="나의 블로그", layout="centered")
 
 # -------------------------------
-# 0. 블로그 제목, 소개 문구, 폰트 선택
+# 0. 블로그 제목, 소개 문구, 폰트 및 스타일 선택
 # -------------------------------
 blog_title = st.sidebar.text_input("블로그 제목 입력", value="나의 블로그")
 blog_intro = st.sidebar.text_input("블로그 소개 문구 입력", value="개발 · 일상 · 기록")
@@ -18,6 +18,11 @@ font_options = [
     "M PLUS Rounded 1c"
 ]
 selected_font = st.sidebar.selectbox("블로그 폰트 선택", font_options)
+
+# 소개 문구 스타일 선택
+intro_color = st.sidebar.color_picker("소개 문구 색상 선택", value="#555555")
+intro_size = st.sidebar.slider("소개 문구 글자 크기 (px)", min_value=12, max_value=40, value=18)
+intro_align = st.sidebar.radio("소개 문구 정렬", ["left", "center", "right"], index=1)
 
 # Google Fonts 적용
 if selected_font:
@@ -54,7 +59,14 @@ else:
 # 블로그 헤더
 # -------------------------------
 st.title(blog_title)
-st.write(blog_intro)  # 이제 사이드바 입력값 반영
+
+# HTML 스타일로 소개 문구 출력
+intro_html = f"""
+<p style='color:{intro_color}; font-size:{intro_size}px; text-align:{intro_align}; margin-bottom:20px;'>
+{blog_intro}
+</p>
+"""
+st.markdown(intro_html, unsafe_allow_html=True)
 st.markdown("---")
 
 # -------------------------------
