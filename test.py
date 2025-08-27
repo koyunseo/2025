@@ -36,7 +36,7 @@ if not os.path.exists(POSTS_FILE):
     df.to_csv(POSTS_FILE, index=False)
 
 # ---------- 탭 ----------
-tab1, tab2, tab3 = st.tabs(["글 보기", "글 작성", "카테고리 관리"])
+tab1, tab2 = st.tabs(["글 보기", "글 작성"])
 
 # ---------- 글 보기 ----------
 with tab1:
@@ -68,8 +68,9 @@ with tab2:
     title = st.text_input("제목")
     content = st.text_area("내용")
     author = st.text_input("작성자 이름")
-    
+
     # 기존 카테고리 + 새 카테고리 입력
+    df = pd.read_csv(POSTS_FILE)
     existing_categories = df["category"].dropna().unique().tolist()
     category_option = st.selectbox("카테고리 선택", existing_categories + ["새 카테고리 추가"])
     new_category = ""
@@ -101,18 +102,3 @@ with tab2:
             df = pd.concat([df, pd.DataFrame([new_post])], ignore_index=True)
             df.to_csv(POSTS_FILE, index=False)
             st.success("✅ 글이 저장되었습니다! 글 목록 탭에서 확인하세요.")
-
-# ---------- 카테고리 관리 ----------
-with tab3:
-    st.header("🗂️ 카테고리 관리")
-    df = pd.read_csv(POSTS_FILE)
-    categories = sorted(df["category"].dropna().unique().tolist())
-    st.info("기존 카테고리를 변경하면 모든 글에 적용됩니다.")
-
-    for cat in categories:
-        new_name = st.text_input(f"'{cat}' 카테고리 이름 변경", cat, key=f"cat_{cat}")
-        if st.button(f"'{cat}' 변경 저장", key=f"save_{cat}"):
-            df.loc[df["category"] == cat, "category"] = new_name.strip()
-            df.to_csv(POSTS_FILE, index=False)
-            st.success(f"✅ '{cat}' → '{new_name}' 변경 완료!")
-            st.experimental_rerun()
