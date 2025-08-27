@@ -12,7 +12,17 @@ if not os.path.exists("posts.csv"):
 else:
     df = pd.read_csv("posts.csv")
 
-st.title("📚 카테고리 블로그")
+# --- 블로그 제목 세션 관리 ---
+if "blog_title" not in st.session_state:
+    st.session_state.blog_title = "📚 카테고리 블로그"  # 기본 제목
+
+st.title(st.session_state.blog_title)
+
+new_title = st.text_input("블로그 제목 변경", st.session_state.blog_title)
+if st.button("제목 저장"):
+    if new_title.strip() != "":
+        st.session_state.blog_title = new_title.strip()
+        st.success("블로그 제목이 변경되었습니다!")
 
 tab1, tab2 = st.tabs(["글 보기", "글 작성"])
 
