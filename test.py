@@ -1,20 +1,9 @@
 import streamlit as st
 import pandas as pd
 import os
-import json
 from datetime import datetime
 
 st.set_page_config(page_title="블로그", layout="wide")
-
-# ---------- JSON 안전 처리 ----------
-def safe_json_loads(x):
-    try:
-        if isinstance(x, str) and x.strip() != "":
-            return json.loads(x)
-        else:
-            return []
-    except json.JSONDecodeError:
-        return []
 
 # ---------- 설정 ----------
 SETTINGS_FILE = "settings.json"
@@ -41,19 +30,15 @@ if st.button("제목 저장"):
 # ---------- 게시글 CSV ----------
 POSTS_FILE = "posts.csv"
 if not os.path.exists(POSTS_FILE):
-    df = pd.DataFrame(columns=["id","title","content","author","category","date","image","likes","comments"])
+    df = pd.DataFrame(columns=["id","title","content","author","category","date","image","likes"])
     df.to_csv(POSTS_FILE, index=False)
 
-# ---------- 로드 및 컬럼 처리 ----------
+# ---------- 로드 ----------
 df = pd.read_csv(POSTS_FILE)
 if "id" not in df.columns:
     df.insert(0, "id", range(1,len(df)+1))
 if "likes" not in df.columns:
     df["likes"] = 0
-if "comments" not in df.columns:
-    df["comments"] = [[] for _ in range(len(df))]
-else:
-    df["comments"] = df["comments"].apply(safe_json_loads)
 df.to_csv(POSTS_FILE, index=False)
 
 # ---------- 탭 ----------
@@ -63,28 +48,15 @@ tab1, tab2 = st.tabs(["글 보기", "글 작성"])
 with tab1:
     st.header("📖 글 목록")
     df = pd.read_csv(POSTS_FILE)
-    df["comments"] = df["comments"].apply(safe_json_loads)
 
     if df.empty:
         st.info("아직 작성된 글이 없습니다.")
     else:
-        categories = ["전체"] + sorted(df["category"].dropna().unique().tolist())
-        selected_category = st.selectbox("카테고리 선택", categories)
-        display_df = df if selected_category=="전체" else df[df["category"]==selected_category]
+        display_df = df
 
         # --- 세션 상태 초기화 ---
         for row in display_df.itertuples():
-            author_key = f"comment_author_{row.id}"
-            text_key = f"comment_text_{row.id}"
-            submitted_key = f"comment_submitted_{row.id}"
             like_key = f"like_{row.id}"
-
-            if author_key not in st.session_state:
-                st.session_state[author_key] = ""
-            if text_key not in st.session_state:
-                st.session_state[text_key] = ""
-            if submitted_key not in st.session_state:
-                st.session_state[submitted_key] = False
             if like_key not in st.session_state:
                 st.session_state[like_key] = row.likes
 
@@ -106,19 +78,16 @@ with tab1:
                     df.to_csv(POSTS_FILE,index=False)
                     st.experimental_rerun()
 
+                st.markdown("---")
+
 # ---------- 글 작성 ----------
 with tab2:
     st.header("✏️ 글 작성하기")
 
     # 세션 상태 사용
-    if "new_title" not in st.session_state:
-        st.session_state["new_title"] = ""
-    if "new_content" not in st.session_state:
-        st.session_state["new_content"] = ""
-    if "new_author" not in st.session_state:
-        st.session_state["new_author"] = ""
-    if "new_category" not in st.session_state:
-        st.session_state["new_category"] = ""
+    for key in ["new_title","new_content","new_author","new_category"]:
+        if key not in st.session_state:
+            st.session_state[key] = ""
 
     st.session_state["new_title"] = st.text_input("제목", st.session_state["new_title"])
     st.session_state["new_content"] = st.text_area("내용", st.session_state["new_content"])
@@ -154,16 +123,13 @@ with tab2:
                 "category": final_category,
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
                 "image": img_path,
-                "likes":0,
-                "comments":json.dumps([])
+                "likes":0
             }
             df = pd.concat([df, pd.DataFrame([new_post])], ignore_index=True)
             df.to_csv(POSTS_FILE,index=False)
 
             # 입력 초기화 후 rerun
-            st.session_state["new_title"] = ""
-            st.session_state["new_content"] = ""
-            st.session_state["new_author"] = ""
-            st.session_state["new_category"] = ""
+            for key in ["new_title","new_content","new_author","new_category"]:
+                st.session_state[key] = ""
             st.success("✅ 글이 저장되었습니다! 글 목록 탭에서 확인하세요.")
             st.experimental_rerun()
