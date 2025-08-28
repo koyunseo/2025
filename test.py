@@ -6,6 +6,17 @@ from datetime import datetime
 
 st.set_page_config(page_title="블로그", layout="wide")
 
+def safe_json_loads(x):
+    try:
+        if isinstance(x, str) and x.strip() != "":
+            return json.loads(x)
+        else:
+            return []
+    except json.JSONDecodeError:
+        return []
+
+df["comments"] = df["comments"].apply(safe_json_loads)
+
 # ---------- 설정 파일 ----------
 SETTINGS_FILE = "settings.json"
 DEFAULT_SETTINGS = {"blog_title": "📚 친구 공유 블로그"}
@@ -95,7 +106,7 @@ with tab1:
                                      "date": datetime.now().strftime("%Y-%m-%d %H:%M")})
                     df.at[idx, "comments"] = json.dumps(comments, ensure_ascii=False)
                     df.to_csv(POSTS_FILE, index=False)
-                    st.success("댓글이 등록되었습니다!")
+                    st.success("댓글이 등록되었습니다! 새로고침 후 반영됩니다.")
 
             st.markdown("---")
 
@@ -139,4 +150,4 @@ with tab2:
             }
             df = pd.concat([df, pd.DataFrame([new_post])], ignore_index=True)
             df.to_csv(POSTS_FILE, index=False)
-            st.success("✅ 글이 저장되었습니다! 글 목록 탭에서 확인하세요.")
+            st.success("✅ 글이 저장되었습니다! 새로고침 후 반영됩니다. 글 목록 탭에서 확인하세요.")
