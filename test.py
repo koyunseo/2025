@@ -23,6 +23,18 @@ def load_settings():
 
 settings = load_settings()
 
+# ---------- 페이지 rerun 처리 ----------
+if "rerun_needed" not in st.session_state:
+    st.session_state["rerun_needed"] = False
+
+if st.session_state.get("rerun_needed", False):
+    st.session_state["new_title"] = ""
+    st.session_state["new_content"] = ""
+    st.session_state["new_author"] = ""
+    st.session_state["new_category"] = ""
+    st.session_state["rerun_needed"] = False
+    st.experimental_rerun()
+
 # ---------- 블로그 제목 ----------
 st.title(settings["blog_title"])
 new_title = st.text_input("블로그 제목 변경", settings["blog_title"])
@@ -48,18 +60,9 @@ if "likes" not in df.columns:
 df.to_csv(POSTS_FILE, index=False)
 
 # ---------- 세션 상태 초기화 ----------
-for key in ["new_title","new_content","new_author","new_category","rerun_needed"]:
+for key in ["new_title","new_content","new_author","new_category"]:
     if key not in st.session_state:
-        st.session_state[key] = "" if "new_" in key else False
-
-# ---------- 페이지 rerun 처리 ----------
-if st.session_state.get("rerun_needed", False):
-    st.session_state["new_title"] = ""
-    st.session_state["new_content"] = ""
-    st.session_state["new_author"] = ""
-    st.session_state["new_category"] = ""
-    st.session_state["rerun_needed"] = False
-    st.experimental_rerun()
+        st.session_state[key] = ""
 
 # ---------- 탭 ----------
 tab1, tab2 = st.tabs(["글 보기", "글 작성"])
@@ -73,7 +76,6 @@ with tab1:
         st.info("아직 작성된 글이 없습니다.")
     else:
         display_df = df
-
         # --- 세션 상태 초기화 (좋아요) ---
         for row in display_df.itertuples():
             like_key = f"like_{row.id}"
@@ -143,6 +145,4 @@ with tab2:
             }
             df = pd.concat([df, pd.DataFrame([new_post])], ignore_index=True)
             df.to_csv(POSTS_FILE,index=False)
-
-            # 새로고침 없이 즉시 반영
             st.session_state["rerun_needed"] = True
