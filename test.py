@@ -96,6 +96,7 @@ with tab1:
                     st.session_state[like_key] += 1
                     df.at[idx,"likes"] = st.session_state[like_key]
                     df.to_csv(POSTS_FILE,index=False)
+                    st.session_state["rerun_needed"] = True
                     st.experimental_rerun()
 
                 st.markdown("---")
