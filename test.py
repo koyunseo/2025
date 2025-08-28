@@ -80,37 +80,49 @@ with tab1:
         display_df = df if selected_category == "전체" else df[df["category"] == selected_category]
 
         for idx, row in display_df.iterrows():
-            st.subheader(row["title"])
-            st.caption(f"작성자: {row['author']} | 작성일: {row['date']} | 카테고리: {row['category']}")
-            if isinstance(row["image"], str) and row["image"] and os.path.exists(row["image"]):
-                st.image(row["image"], use_column_width=True)
-            st.write(row["content"])
+            container = st.container()  # 글별 컨테이너
+            with container:
+                st.subheader(row["title"])
+                st.caption(f"작성자: {row['author']} | 작성일: {row['date']} | 카테고리: {row['category']}")
+                if isinstance(row["image"], str) and row["image"] and os.path.exists(row["image"]):
+                    st.image(row["image"], use_column_width=True)
+                st.write(row["content"])
 
-            # 좋아요 버튼
-            like_key = f"like_{row['id']}"
-            if st.button(f"👍 좋아요 ({row['likes']})", key=like_key):
-                df.at[idx, "likes"] += 1
-                df.to_csv(POSTS_FILE, index=False)
-                st.success("좋아요가 증가했습니다!")
+                # 좋아요와 댓글 컨테이너
+                interact_col = st.container()
 
-            # 댓글
-            st.markdown("💬 댓글")
-            comments = row["comments"] if isinstance(row["comments"], list) else []
-            for c in comments:
-                st.write(f"{c['author']} ({c['date']}): {c['text']}")
-
-            comment_author = st.text_input("댓글 작성자", key=f"comment_author_{row['id']}")
-            comment_text = st.text_area("댓글 내용", key=f"comment_text_{row['id']}")
-            if st.button("댓글 작성", key=f"comment_btn_{row['id']}"):
-                if comment_author.strip() and comment_text.strip():
-                    comments.append({"author": comment_author.strip(),
-                                     "text": comment_text.strip(),
-                                     "date": datetime.now().strftime("%Y-%m-%d %H:%M")})
-                    df.at[idx, "comments"] = json.dumps(comments, ensure_ascii=False)
+                # 좋아요 버튼
+                like_key = f"like_{row['id']}"
+                like_count = row["likes"]
+                if st.button(f"👍 좋아요 ({like_count})", key=like_key):
+                    df.at[idx, "likes"] += 1
                     df.to_csv(POSTS_FILE, index=False)
-                    st.success("댓글이 등록되었습니다!")
+                    st.success("좋아요가 증가했습니다!")
+                    like_count += 1
 
-            st.markdown("---")
+                st.write(f"현재 좋아요: {like_count}")
+
+                # 댓글 표시
+                comments = row["comments"] if isinstance(row["comments"], list) else []
+                st.markdown("💬 댓글")
+                for c in comments:
+                    st.write(f"{c['author']} ({c['date']}): {c['text']}")
+
+                # 댓글 작성
+                comment_author = st.text_input("댓글 작성자", key=f"comment_author_{row['id']}")
+                comment_text = st.text_area("댓글 내용", key=f"comment_text_{row['id']}")
+                if st.button("댓글 작성", key=f"comment_btn_{row['id']}"):
+                    if comment_author.strip() and comment_text.strip():
+                        comments.append({
+                            "author": comment_author.strip(),
+                            "text": comment_text.strip(),
+                            "date": datetime.now().strftime("%Y-%m-%d %H:%M")
+                        })
+                        df.at[idx, "comments"] = json.dumps(comments, ensure_ascii=False)
+                        df.to_csv(POSTS_FILE, index=False)
+                        st.success("댓글이 등록되었습니다!")
+
+                st.markdown("---")
 
 # ---------- 글 작성 ----------
 with tab2:
