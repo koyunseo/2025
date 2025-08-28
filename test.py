@@ -34,12 +34,20 @@ if not os.path.exists(POSTS_FILE):
     df = pd.DataFrame(columns=["id", "title", "content", "author", "category", "date", "image", "likes", "comments"])
     df.to_csv(POSTS_FILE, index=False)
 
-# ---------- 로드 ----------
+# ---------- 로드 및 ID 처리 ----------
 df = pd.read_csv(POSTS_FILE)
+
+# 기존 데이터에 id 컬럼이 없으면 생성
+if "id" not in df.columns:
+    df.insert(0, "id", range(1, len(df)+1))
+
+# likes, comments 컬럼 처리
 if "likes" not in df.columns:
     df["likes"] = 0
 if "comments" not in df.columns:
     df["comments"] = df["comments"].apply(lambda x: json.loads(x) if pd.notna(x) else [])
+
+# 저장
 df.to_csv(POSTS_FILE, index=False)
 
 # ---------- 탭 ----------
