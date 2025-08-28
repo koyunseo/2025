@@ -17,7 +17,6 @@ def load_settings():
                 return json.load(f)
         except json.JSONDecodeError:
             pass
-    # 기본 설정으로 새로 생성
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         json.dump(DEFAULT_SETTINGS, f, ensure_ascii=False)
     return DEFAULT_SETTINGS
