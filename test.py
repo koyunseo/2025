@@ -16,7 +16,7 @@ def load_settings():
             with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
         except json.JSONDecodeError:
-            pass  # 파일 손상 시 아래에서 재생성
+            pass
     # 기본 설정으로 새로 생성
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         json.dump(DEFAULT_SETTINGS, f, ensure_ascii=False)
@@ -48,6 +48,20 @@ if "likes" not in df.columns:
     df["likes"] = 0
 df.to_csv(POSTS_FILE, index=False)
 
+# ---------- 세션 상태 초기화 ----------
+for key in ["new_title","new_content","new_author","new_category","rerun_needed"]:
+    if key not in st.session_state:
+        st.session_state[key] = "" if "new_" in key else False
+
+# ---------- 페이지 rerun 처리 ----------
+if st.session_state.get("rerun_needed", False):
+    st.session_state["new_title"] = ""
+    st.session_state["new_content"] = ""
+    st.session_state["new_author"] = ""
+    st.session_state["new_category"] = ""
+    st.session_state["rerun_needed"] = False
+    st.experimental_rerun()
+
 # ---------- 탭 ----------
 tab1, tab2 = st.tabs(["글 보기", "글 작성"])
 
@@ -61,7 +75,7 @@ with tab1:
     else:
         display_df = df
 
-        # --- 세션 상태 초기화 ---
+        # --- 세션 상태 초기화 (좋아요) ---
         for row in display_df.itertuples():
             like_key = f"like_{row.id}"
             if like_key not in st.session_state:
@@ -90,11 +104,6 @@ with tab1:
 # ---------- 글 작성 ----------
 with tab2:
     st.header("✏️ 글 작성하기")
-
-    # 세션 상태 사용
-    for key in ["new_title","new_content","new_author","new_category"]:
-        if key not in st.session_state:
-            st.session_state[key] = ""
 
     st.session_state["new_title"] = st.text_input("제목", st.session_state["new_title"])
     st.session_state["new_content"] = st.text_area("내용", st.session_state["new_content"])
@@ -135,8 +144,5 @@ with tab2:
             df = pd.concat([df, pd.DataFrame([new_post])], ignore_index=True)
             df.to_csv(POSTS_FILE,index=False)
 
-            # 입력 초기화 후 rerun
-            for key in ["new_title","new_content","new_author","new_category"]:
-                st.session_state[key] = ""
-            st.success("✅ 글이 저장되었습니다! 글 목록 탭에서 확인하세요.")
-            st.experimental_rerun()
+            # 새로고침 없이 즉시 반영
+            st.session_state["rerun_needed"] = True
