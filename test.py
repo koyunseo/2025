@@ -27,7 +27,6 @@ if st.button("제목 저장"):
         with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
             json.dump(settings, f, ensure_ascii=False)
         st.success("✅ 블로그 제목이 변경되었습니다! 새로고침 후 반영됩니다.")
-        st.experimental_rerun()
 
 # ---------- 게시글 CSV ----------
 POSTS_FILE = "posts.csv"
@@ -40,7 +39,7 @@ df = pd.read_csv(POSTS_FILE)
 if "likes" not in df.columns:
     df["likes"] = 0
 if "comments" not in df.columns:
-    df["comments"] = [[] for _ in range(len(df))]
+    df["comments"] = df["comments"].apply(lambda x: json.loads(x) if pd.notna(x) else [])
 df.to_csv(POSTS_FILE, index=False)
 
 # ---------- 탭 ----------
@@ -50,6 +49,8 @@ tab1, tab2 = st.tabs(["글 보기", "글 작성"])
 with tab1:
     st.header("📖 글 목록")
     df = pd.read_csv(POSTS_FILE)
+    df["comments"] = df["comments"].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
+
     if df.empty:
         st.info("아직 작성된 글이 없습니다.")
     else:
@@ -65,28 +66,28 @@ with tab1:
             st.write(row["content"])
 
             # 좋아요 버튼
-            like_key = f"like_{row['title']}_{idx}"
+            like_key = f"like_{row['id']}"
             if st.button(f"👍 좋아요 ({row['likes']})", key=like_key):
                 df.at[idx, "likes"] += 1
                 df.to_csv(POSTS_FILE, index=False)
-                st.experimental_rerun()
+                st.success("좋아요가 증가했습니다!")
 
             # 댓글
             st.markdown("💬 댓글")
-            comments = json.loads(row["comments"]) if isinstance(row["comments"], str) and row["comments"] else []
+            comments = row["comments"] if isinstance(row["comments"], list) else []
             for c in comments:
                 st.write(f"{c['author']} ({c['date']}): {c['text']}")
 
-            comment_author = st.text_input("댓글 작성자", key=f"comment_author_{idx}")
-            comment_text = st.text_area("댓글 내용", key=f"comment_text_{idx}")
-            if st.button("댓글 작성", key=f"comment_btn_{idx}"):
+            comment_author = st.text_input("댓글 작성자", key=f"comment_author_{row['id']}")
+            comment_text = st.text_area("댓글 내용", key=f"comment_text_{row['id']}")
+            if st.button("댓글 작성", key=f"comment_btn_{row['id']}"):
                 if comment_author.strip() and comment_text.strip():
-                    comments.append({"author": comment_author.strip(), "text": comment_text.strip(),
+                    comments.append({"author": comment_author.strip(),
+                                     "text": comment_text.strip(),
                                      "date": datetime.now().strftime("%Y-%m-%d %H:%M")})
                     df.at[idx, "comments"] = json.dumps(comments, ensure_ascii=False)
                     df.to_csv(POSTS_FILE, index=False)
                     st.success("댓글이 등록되었습니다!")
-                    st.experimental_rerun()
 
             st.markdown("---")
 
