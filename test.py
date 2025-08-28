@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+import json
 from datetime import datetime
 
 st.set_page_config(page_title="블로그", layout="wide")
@@ -9,13 +10,19 @@ st.set_page_config(page_title="블로그", layout="wide")
 SETTINGS_FILE = "settings.json"
 DEFAULT_SETTINGS = {"blog_title": "📚 친구 공유 블로그"}
 
-if os.path.exists(SETTINGS_FILE):
-    with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
-        settings = json.load(f)
-else:
-    settings = DEFAULT_SETTINGS
+def load_settings():
+    if os.path.exists(SETTINGS_FILE):
+        try:
+            with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            pass  # 파일 손상 시 아래에서 재생성
+    # 기본 설정으로 새로 생성
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
-        json.dump(settings, f, ensure_ascii=False)
+        json.dump(DEFAULT_SETTINGS, f, ensure_ascii=False)
+    return DEFAULT_SETTINGS
+
+settings = load_settings()
 
 # ---------- 블로그 제목 ----------
 st.title(settings["blog_title"])
