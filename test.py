@@ -72,6 +72,29 @@ with tab1:
         selected_category = st.selectbox("카테고리 선택", categories)
         display_df = df if selected_category=="전체" else df[df["category"]==selected_category]
 
+        # --- 세션 상태 초기화 ---
+        for row in display_df.itertuples():
+            author_key = f"comment_author_{row.id}"
+            text_key = f"comment_text_{row.id}"
+            submitted_key = f"comment_submitted_{row.id}"
+            like_key = f"like_{row.id}"
+
+            if author_key not in st.session_state:
+                st.session_state[author_key] = ""
+            if text_key not in st.session_state:
+                st.session_state[text_key] = ""
+            if submitted_key not in st.session_state:
+                st.session_state[submitted_key] = False
+            if like_key not in st.session_state:
+                st.session_state[like_key] = row.likes
+
+            # 댓글 초기화
+            if st.session_state[submitted_key]:
+                st.session_state[author_key] = ""
+                st.session_state[text_key] = ""
+                st.session_state[submitted_key] = False
+
+        # --- 글 표시 ---
         for idx, row in display_df.iterrows():
             container = st.container()
             with container:
@@ -83,15 +106,11 @@ with tab1:
 
                 # --- 좋아요 ---
                 like_key = f"like_{row['id']}"
-                if like_key not in st.session_state:
-                    st.session_state[like_key] = row["likes"]
-
-                col1, col2 = st.columns([1,4])
-                with col1:
-                    if st.button(f"👍 좋아요 ({st.session_state[like_key]})", key=like_key+"_btn"):
-                        st.session_state[like_key] += 1
-                        df.at[idx,"likes"] = st.session_state[like_key]
-                        df.to_csv(POSTS_FILE, index=False)
+                if st.button(f"👍 좋아요 ({st.session_state[like_key]})", key=like_key+"_btn"):
+                    st.session_state[like_key] += 1
+                    df.at[idx,"likes"] = st.session_state[like_key]
+                    df.to_csv(POSTS_FILE,index=False)
+                    st.experimental_rerun()
 
                 # --- 댓글 표시 ---
                 comments = row["comments"]
@@ -102,15 +121,11 @@ with tab1:
                 # --- 댓글 작성 ---
                 author_key = f"comment_author_{row['id']}"
                 text_key = f"comment_text_{row['id']}"
-                if author_key not in st.session_state:
-                    st.session_state[author_key] = ""
-                if text_key not in st.session_state:
-                    st.session_state[text_key] = ""
-
-                col3, col4 = st.columns([1,4])
-                with col3:
+                submitted_key = f"comment_submitted_{row['id']}"
+                col1, col2 = st.columns([1,4])
+                with col1:
                     comment_author = st.text_input("댓글 작성자", key=author_key)
-                with col4:
+                with col2:
                     comment_text = st.text_area("댓글 내용", key=text_key)
                 if st.button("댓글 작성", key=f"comment_btn_{row['id']}"):
                     if comment_author.strip() and comment_text.strip():
@@ -120,9 +135,8 @@ with tab1:
                             "date": datetime.now().strftime("%Y-%m-%d %H:%M")
                         })
                         df.at[idx,"comments"] = json.dumps(comments, ensure_ascii=False)
-                        df.to_csv(POSTS_FILE, index=False)
-                        st.session_state[author_key] = ""
-                        st.session_state[text_key] = ""
+                        df.to_csv(POSTS_FILE,index=False)
+                        st.session_state[submitted_key] = True
                         st.experimental_rerun()
 
                 st.markdown("---")
