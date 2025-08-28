@@ -16,7 +16,7 @@ def safe_json_loads(x):
     except json.JSONDecodeError:
         return []
 
-# ---------- 설정 파일 ----------
+# ---------- 설정 ----------
 SETTINGS_FILE = "settings.json"
 DEFAULT_SETTINGS = {"blog_title": "📚 친구 공유 블로그"}
 
@@ -46,21 +46,14 @@ if not os.path.exists(POSTS_FILE):
 
 # ---------- 로드 및 컬럼 처리 ----------
 df = pd.read_csv(POSTS_FILE)
-
-# id 컬럼 처리
 if "id" not in df.columns:
-    df.insert(0,"id",range(1,len(df)+1))
-
-# likes 컬럼 처리
+    df.insert(0, "id", range(1,len(df)+1))
 if "likes" not in df.columns:
     df["likes"] = 0
-
-# comments 컬럼 안전 처리
 if "comments" not in df.columns:
     df["comments"] = [[] for _ in range(len(df))]
 else:
     df["comments"] = df["comments"].apply(safe_json_loads)
-
 df.to_csv(POSTS_FILE, index=False)
 
 # ---------- 탭 ----------
@@ -88,10 +81,25 @@ with tab1:
                     st.image(row["image"], use_column_width=True)
                 st.write(row["content"])
 
-                # 좋아요 + 댓글
-                comments = row["comments"] if isinstance(row["comments"], list) else []
+                # --- 좋아요 ---
+                like_key = f"like_{row['id']}"
+                if like_key not in st.session_state:
+                    st.session_state[like_key] = row["likes"]
 
-                # 세션 상태 초기화
+                col1, col2 = st.columns([1,4])
+                with col1:
+                    if st.button(f"👍 좋아요 ({st.session_state[like_key]})", key=like_key+"_btn"):
+                        st.session_state[like_key] += 1
+                        df.at[idx,"likes"] = st.session_state[like_key]
+                        df.to_csv(POSTS_FILE, index=False)
+
+                # --- 댓글 표시 ---
+                comments = row["comments"]
+                st.markdown("💬 댓글")
+                for c in comments:
+                    st.write(f"{c['author']} ({c['date']}): {c['text']}")
+
+                # --- 댓글 작성 ---
                 author_key = f"comment_author_{row['id']}"
                 text_key = f"comment_text_{row['id']}"
                 if author_key not in st.session_state:
@@ -99,27 +107,11 @@ with tab1:
                 if text_key not in st.session_state:
                     st.session_state[text_key] = ""
 
-                # 좋아요
-                like_key = f"like_{row['id']}"
-                like_count = row["likes"]
-                if st.button(f"👍 좋아요 ({like_count})", key=like_key):
-                    df.at[idx,"likes"] += 1
-                    df.to_csv(POSTS_FILE,index=False)
-                    st.session_state[like_key] = df.at[idx,"likes"]
-                    st.experimental_rerun()
-                if like_key in st.session_state:
-                    st.write(f"현재 좋아요: {st.session_state[like_key]}")
-                else:
-                    st.write(f"현재 좋아요: {like_count}")
-
-                # 댓글 표시
-                st.markdown("💬 댓글")
-                for c in comments:
-                    st.write(f"{c['author']} ({c['date']}): {c['text']}")
-
-                # 댓글 작성
-                comment_author = st.text_input("댓글 작성자", key=author_key)
-                comment_text = st.text_area("댓글 내용", key=text_key)
+                col3, col4 = st.columns([1,4])
+                with col3:
+                    comment_author = st.text_input("댓글 작성자", key=author_key)
+                with col4:
+                    comment_text = st.text_area("댓글 내용", key=text_key)
                 if st.button("댓글 작성", key=f"comment_btn_{row['id']}"):
                     if comment_author.strip() and comment_text.strip():
                         comments.append({
@@ -128,7 +120,7 @@ with tab1:
                             "date": datetime.now().strftime("%Y-%m-%d %H:%M")
                         })
                         df.at[idx,"comments"] = json.dumps(comments, ensure_ascii=False)
-                        df.to_csv(POSTS_FILE,index=False)
+                        df.to_csv(POSTS_FILE, index=False)
                         st.session_state[author_key] = ""
                         st.session_state[text_key] = ""
                         st.experimental_rerun()
