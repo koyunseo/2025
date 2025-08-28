@@ -6,6 +6,7 @@ from datetime import datetime
 
 st.set_page_config(page_title="블로그", layout="wide")
 
+# ---------- JSON 안전 처리 함수 ----------
 def safe_json_loads(x):
     try:
         if isinstance(x, str) and x.strip() != "":
@@ -14,8 +15,6 @@ def safe_json_loads(x):
             return []
     except json.JSONDecodeError:
         return []
-
-df["comments"] = df["comments"].apply(safe_json_loads)
 
 # ---------- 설정 파일 ----------
 SETTINGS_FILE = "settings.json"
@@ -45,20 +44,23 @@ if not os.path.exists(POSTS_FILE):
     df = pd.DataFrame(columns=["id", "title", "content", "author", "category", "date", "image", "likes", "comments"])
     df.to_csv(POSTS_FILE, index=False)
 
-# ---------- 로드 및 ID 처리 ----------
+# ---------- 로드 및 컬럼 처리 ----------
 df = pd.read_csv(POSTS_FILE)
 
-# 기존 데이터에 id 컬럼이 없으면 생성
+# id 컬럼 처리
 if "id" not in df.columns:
     df.insert(0, "id", range(1, len(df)+1))
 
-# likes, comments 컬럼 처리
+# likes 컬럼 처리
 if "likes" not in df.columns:
     df["likes"] = 0
-if "comments" not in df.columns:
-    df["comments"] = df["comments"].apply(lambda x: json.loads(x) if pd.notna(x) else [])
 
-# 저장
+# comments 컬럼 안전 처리
+if "comments" not in df.columns:
+    df["comments"] = [[] for _ in range(len(df))]
+else:
+    df["comments"] = df["comments"].apply(safe_json_loads)
+
 df.to_csv(POSTS_FILE, index=False)
 
 # ---------- 탭 ----------
@@ -68,7 +70,7 @@ tab1, tab2 = st.tabs(["글 보기", "글 작성"])
 with tab1:
     st.header("📖 글 목록")
     df = pd.read_csv(POSTS_FILE)
-    df["comments"] = df["comments"].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
+    df["comments"] = df["comments"].apply(safe_json_loads)
 
     if df.empty:
         st.info("아직 작성된 글이 없습니다.")
@@ -106,7 +108,7 @@ with tab1:
                                      "date": datetime.now().strftime("%Y-%m-%d %H:%M")})
                     df.at[idx, "comments"] = json.dumps(comments, ensure_ascii=False)
                     df.to_csv(POSTS_FILE, index=False)
-                    st.success("댓글이 등록되었습니다! 새로고침 후 반영됩니다.")
+                    st.success("댓글이 등록되었습니다!")
 
             st.markdown("---")
 
@@ -150,4 +152,4 @@ with tab2:
             }
             df = pd.concat([df, pd.DataFrame([new_post])], ignore_index=True)
             df.to_csv(POSTS_FILE, index=False)
-            st.success("✅ 글이 저장되었습니다! 새로고침 후 반영됩니다. 글 목록 탭에서 확인하세요.")
+            st.success("✅ 글이 저장되었습니다! 글 목록 탭에서 확인하세요.")
