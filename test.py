@@ -88,12 +88,6 @@ with tab1:
             if like_key not in st.session_state:
                 st.session_state[like_key] = row.likes
 
-            # 댓글 초기화
-            if st.session_state[submitted_key]:
-                st.session_state[author_key] = ""
-                st.session_state[text_key] = ""
-                st.session_state[submitted_key] = False
-
         # --- 글 표시 ---
         for idx, row in display_df.iterrows():
             container = st.container()
@@ -112,53 +106,37 @@ with tab1:
                     df.to_csv(POSTS_FILE,index=False)
                     st.experimental_rerun()
 
-                # --- 댓글 표시 ---
-                comments = row["comments"]
-                st.markdown("💬 댓글")
-                for c in comments:
-                    st.write(f"{c['author']} ({c['date']}): {c['text']}")
-
-                # --- 댓글 작성 ---
-                author_key = f"comment_author_{row['id']}"
-                text_key = f"comment_text_{row['id']}"
-                submitted_key = f"comment_submitted_{row['id']}"
-                col1, col2 = st.columns([1,4])
-                with col1:
-                    comment_author = st.text_input("댓글 작성자", key=author_key)
-                with col2:
-                    comment_text = st.text_area("댓글 내용", key=text_key)
-                if st.button("댓글 작성", key=f"comment_btn_{row['id']}"):
-                    if comment_author.strip() and comment_text.strip():
-                        comments.append({
-                            "author": comment_author.strip(),
-                            "text": comment_text.strip(),
-                            "date": datetime.now().strftime("%Y-%m-%d %H:%M")
-                        })
-                        df.at[idx,"comments"] = json.dumps(comments, ensure_ascii=False)
-                        df.to_csv(POSTS_FILE,index=False)
-                        st.session_state[submitted_key] = True
-                        st.experimental_rerun()
-
-                st.markdown("---")
-
 # ---------- 글 작성 ----------
 with tab2:
     st.header("✏️ 글 작성하기")
-    title = st.text_input("제목")
-    content = st.text_area("내용")
-    author = st.text_input("작성자 이름")
+
+    # 세션 상태 사용
+    if "new_title" not in st.session_state:
+        st.session_state["new_title"] = ""
+    if "new_content" not in st.session_state:
+        st.session_state["new_content"] = ""
+    if "new_author" not in st.session_state:
+        st.session_state["new_author"] = ""
+    if "new_category" not in st.session_state:
+        st.session_state["new_category"] = ""
+
+    st.session_state["new_title"] = st.text_input("제목", st.session_state["new_title"])
+    st.session_state["new_content"] = st.text_area("내용", st.session_state["new_content"])
+    st.session_state["new_author"] = st.text_input("작성자 이름", st.session_state["new_author"])
 
     existing_categories = df["category"].dropna().unique().tolist()
-    category = st.selectbox("카테고리 선택", existing_categories + ["새 카테고리 추가"])
-    new_category = ""
-    if category=="새 카테고리 추가":
-        new_category = st.text_input("새 카테고리 이름 입력")
-    final_category = new_category if category=="새 카테고리 추가" else category
+    category_option = existing_categories + ["새 카테고리 추가"]
+    selected_category = st.selectbox("카테고리 선택", category_option)
+    if selected_category == "새 카테고리 추가":
+        st.session_state["new_category"] = st.text_input("새 카테고리 이름 입력", st.session_state["new_category"])
+        final_category = st.session_state["new_category"]
+    else:
+        final_category = selected_category
 
     image = st.file_uploader("이미지 업로드", type=["png","jpg","jpeg"])
 
     if st.button("글 저장하기"):
-        if title.strip()=="" or content.strip()=="" or author.strip()=="":
+        if st.session_state["new_title"].strip()=="" or st.session_state["new_content"].strip()=="" or st.session_state["new_author"].strip()=="":
             st.warning("제목, 내용, 작성자를 모두 입력해야 합니다!")
         else:
             img_path = ""
@@ -170,9 +148,9 @@ with tab2:
 
             new_post = {
                 "id": len(df)+1,
-                "title": title,
-                "content": content,
-                "author": author,
+                "title": st.session_state["new_title"],
+                "content": st.session_state["new_content"],
+                "author": st.session_state["new_author"],
                 "category": final_category,
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
                 "image": img_path,
@@ -181,4 +159,11 @@ with tab2:
             }
             df = pd.concat([df, pd.DataFrame([new_post])], ignore_index=True)
             df.to_csv(POSTS_FILE,index=False)
+
+            # 입력 초기화 후 rerun
+            st.session_state["new_title"] = ""
+            st.session_state["new_content"] = ""
+            st.session_state["new_author"] = ""
+            st.session_state["new_category"] = ""
             st.success("✅ 글이 저장되었습니다! 글 목록 탭에서 확인하세요.")
+            st.experimental_rerun()
