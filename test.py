@@ -5,18 +5,16 @@ from datetime import datetime
 
 st.set_page_config(page_title="블로그", layout="wide")
 
-# --- 게시글 CSV 초기화 ---
 POSTS_FILE = "posts.csv"
 if not os.path.exists(POSTS_FILE):
     df = pd.DataFrame(columns=["title","content","author","category","date","image"])
-    df.to_csv(POSTS_FILE, index=False)
+    df.to_csv(POSTS_FILE,index=False)
 
-# --- 세션 상태 초기화 ---
-for key in ["title","content","author","new_category"]:
+# 세션 상태 초기화
+for key in ["title","content","author","category_new"]:
     if key not in st.session_state:
         st.session_state[key] = ""
 
-# --- 탭 ---
 tab1, tab2 = st.tabs(["글 보기","글 작성"])
 
 # --- 글 보기 ---
@@ -26,7 +24,7 @@ with tab1:
     if df.empty:
         st.info("아직 작성된 글이 없습니다.")
     else:
-        for i, row in df.iterrows():
+        for i,row in df.iterrows():
             st.subheader(row["title"])
             st.caption(f"작성자: {row['author']} | 작성일: {row['date']} | 카테고리: {row['category']}")
             if isinstance(row["image"], str) and row["image"] and os.path.exists(row["image"]):
@@ -37,19 +35,17 @@ with tab1:
 # --- 글 작성 ---
 with tab2:
     st.header("✏️ 글 작성하기")
-
     st.session_state["title"] = st.text_input("제목", st.session_state["title"])
     st.session_state["content"] = st.text_area("내용", st.session_state["content"])
     st.session_state["author"] = st.text_input("작성자 이름", st.session_state["author"])
 
-    # 카테고리
     df = pd.read_csv(POSTS_FILE)
     existing_categories = df["category"].dropna().unique().tolist()
     category_option = existing_categories + ["새 카테고리 추가"]
     selected_category = st.selectbox("카테고리 선택", category_option)
-    if selected_category == "새 카테고리 추가":
-        st.session_state["new_category"] = st.text_input("새 카테고리 이름 입력", st.session_state["new_category"])
-        final_category = st.session_state["new_category"]
+    if selected_category=="새 카테고리 추가":
+        st.session_state["category_new"] = st.text_input("새 카테고리 입력", st.session_state["category_new"])
+        final_category = st.session_state["category_new"]
     else:
         final_category = selected_category
 
@@ -57,17 +53,16 @@ with tab2:
 
     if st.button("글 저장하기"):
         if st.session_state["title"].strip()=="" or st.session_state["content"].strip()=="" or st.session_state["author"].strip()=="":
-            st.warning("제목, 내용, 작성자를 모두 입력해야 합니다!")
+            st.warning("모든 항목을 입력하세요!")
         else:
-            # 이미지 저장
             img_path = ""
-            if image is not None:
+            if image:
                 os.makedirs("images", exist_ok=True)
                 img_path = os.path.join("images", image.name)
-                with open(img_path, "wb") as f:
+                with open(img_path,"wb") as f:
                     f.write(image.getbuffer())
 
-            # 글 저장
+            # CSV 읽고 쓰기 한 번만
             df = pd.read_csv(POSTS_FILE)
             new_post = {
                 "title": st.session_state["title"],
@@ -77,13 +72,13 @@ with tab2:
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
                 "image": img_path
             }
-            df = pd.concat([df, pd.DataFrame([new_post])], ignore_index=True)
-            df.to_csv(POSTS_FILE, index=False)
+            df = pd.concat([df,pd.DataFrame([new_post])], ignore_index=True)
+            df.to_csv(POSTS_FILE,index=False)
 
-            # 입력값 초기화
+            # 입력 초기화
             st.session_state["title"] = ""
             st.session_state["content"] = ""
             st.session_state["author"] = ""
-            st.session_state["new_category"] = ""
+            st.session_state["category_new"] = ""
 
             st.success("✅ 글이 저장되었습니다! 글 목록 탭에서 확인하세요.")
