@@ -4,12 +4,12 @@ import os
 import json
 from datetime import datetime
 
-# --- 페이지 설정 ---
 st.set_page_config(page_title="블로그", layout="wide")
 
-# --- 설정 파일 관리 ---
+# --- 설정 파일 ---
 SETTINGS_FILE = "settings.json"
 POSTS_FILE = "posts.csv"
+COMMENTS_FILE = "comments.csv"
 DEFAULT_SETTINGS = {"blog_title": "📚 카테고리 블로그"}
 
 # 설정 로드
@@ -21,7 +21,7 @@ else:
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         json.dump(settings, f, ensure_ascii=False)
 
-# --- 블로그 제목 표시 ---
+# 블로그 제목
 st.title(settings["blog_title"])
 
 # 제목 변경 UI
@@ -32,12 +32,15 @@ if st.button("제목 저장"):
         with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
             json.dump(settings, f, ensure_ascii=False)
         st.success("✅ 블로그 제목이 변경되었습니다! 새로고침하면 반영됩니다.")
-        st.stop()  # rerun 대신 stop() 사용 (Cloud 호환성 ↑)
+        st.rerun()  # 최신 Streamlit에서는 st.experimental_rerun() 대신 st.rerun()
 
 # --- 게시글 CSV 초기화 ---
 if not os.path.exists(POSTS_FILE):
-    df = pd.DataFrame(columns=["title", "content", "author", "category", "date", "image"])
-    df.to_csv(POSTS_FILE, index=False)
+    pd.DataFrame(columns=["title", "content", "author", "category", "date", "image"]).to_csv(POSTS_FILE, index=False)
+
+# --- 댓글 CSV 초기화 ---
+if not os.path.exists(COMMENTS_FILE):
+    pd.DataFrame(columns=["post_title", "author", "comment", "date"]).to_csv(COMMENTS_FILE, index=False)
 
 # 탭 UI
 tab1, tab2 = st.tabs(["글 보기", "글 작성"])
@@ -46,6 +49,8 @@ tab1, tab2 = st.tabs(["글 보기", "글 작성"])
 with tab1:
     st.header("📖 글 목록")
     df = pd.read_csv(POSTS_FILE)
+    comments_df = pd.read_csv(COMMENTS_FILE)
+
     if df.empty:
         st.info("아직 작성된 글이 없습니다.")
     else:
@@ -60,23 +65,48 @@ with tab1:
         else:
             for _, row in df.iterrows():
                 expander_label = f"{row['title']}  |  {row['author']}"
-                with st.expander(expander_label):  # 제목+작성자 함께 표시
+                with st.expander(expander_label):
                     st.caption(f"작성일: {row['date']} | 카테고리: {row['category']}")
                     if isinstance(row["image"], str) and row["image"] and os.path.exists(row["image"]):
                         st.image(row["image"], use_container_width=True)
                     st.write(row["content"])
+                    st.markdown("---")
 
+                    # --- 댓글 표시 ---
+                    st.subheader("💬 댓글")
+                    post_comments = comments_df[comments_df["post_title"] == row["title"]]
+                    if post_comments.empty:
+                        st.info("아직 댓글이 없습니다.")
+                    else:
+                        for _, c in post_comments.iterrows():
+                            st.markdown(f"- **{c['author']}** ({c['date']}) : {c['comment']}")
 
+                    # --- 댓글 작성 ---
+                    st.markdown("**댓글 작성하기**")
+                    comment_author = st.text_input(f"작성자 이름 ({row['title']})", key=f"author_{row['title']}")
+                    comment_text = st.text_area(f"댓글 내용 ({row['title']})", key=f"text_{row['title']}")
+                    if st.button("댓글 저장", key=f"btn_{row['title']}"):
+                        if comment_author.strip() == "" or comment_text.strip() == "":
+                            st.warning("작성자와 댓글 내용을 모두 입력해주세요!")
+                        else:
+                            new_comment = {
+                                "post_title": row["title"],
+                                "author": comment_author.strip(),
+                                "comment": comment_text.strip(),
+                                "date": datetime.now().strftime("%Y-%m-%d %H:%M")
+                            }
+                            comments_df = pd.concat([comments_df, pd.DataFrame([new_comment])], ignore_index=True)
+                            comments_df.to_csv(COMMENTS_FILE, index=False)
+                            st.success("✅ 댓글이 저장되었습니다!")
+                            st.rerun()
 
 # --- 글 작성 ---
 with tab2:
     st.header("✏️ 글 작성하기")
-
     title = st.text_input("제목")
     content = st.text_area("내용")
     author = st.text_input("작성자 이름")
 
-    # --- 카테고리 동적 관리 ---
     df = pd.read_csv(POSTS_FILE)
     existing_categories = df["category"].dropna().unique().tolist()
     category = st.selectbox("카테고리 선택", existing_categories + ["새 카테고리 추가"])
@@ -92,15 +122,13 @@ with tab2:
         else:
             final_category = new_category if category == "새 카테고리 추가" else category
 
-            # 이미지 저장
             img_path = ""
             if image is not None:
-                os.makedirs("images", exist_ok=True)
                 img_path = os.path.join("images", image.name)
+                os.makedirs("images", exist_ok=True)
                 with open(img_path, "wb") as f:
                     f.write(image.getbuffer())
 
-            # 새 글 추가
             new_post = {
                 "title": title,
                 "content": content,
@@ -112,4 +140,4 @@ with tab2:
             df = pd.concat([df, pd.DataFrame([new_post])], ignore_index=True)
             df.to_csv(POSTS_FILE, index=False)
             st.success("✅ 글이 저장되었습니다! 글 목록 탭에서 확인하세요.")
-            st.stop()  # rerun 대신 stop() 사용
+            st.rerun()
