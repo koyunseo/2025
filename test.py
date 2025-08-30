@@ -83,7 +83,20 @@ with tab1:
                         st.session_state[like_key] += 1
                         df.loc[i, "likes"] = st.session_state[like_key]  # df에도 즉시 반영
                         df.to_csv("posts.csv", index=False)
-                        
+
+                    # 글 반복문 안에서 i, row 사용
+                    if "comments" not in row or pd.isna(row["comments"]):
+                        comments = []
+                    else:
+                        comments = eval(row["comments"])  # 문자열로 저장된 리스트를 실제 리스트로 변환
+                    
+                    # 세션 상태 초기화
+                    if f"comments_{i}" not in st.session_state:
+                        st.session_state[f"comments_{i}"] = comments
+                    
+                    # 현재 댓글 가져오기
+                    comments = st.session_state[f"comments_{i}"]
+
                     # 글별 댓글 초기화
                     if f"comments_{i}" not in st.session_state:
                         st.session_state[f"comments_{i}"] = comments
