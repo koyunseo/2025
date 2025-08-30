@@ -81,13 +81,13 @@ if like_key not in st.session_state:
 
 if st.button(f"👍 좋아요 ({st.session_state[like_key]})", key=f"like_btn_{i}"):
     st.session_state[like_key] += 1
-    df.loc[i, "likes"] = st.session_state[like_key]  # df에도 즉시 반영
+    df.loc[i, "likes"] = st.session_state[like_key]  #df에도 즉시 반영
     df.to_csv("posts.csv", index=False)
     st.success("좋아요가 반영되었습니다!")
 
 
                     # 댓글
-                    st.markdown("**댓글:**")
+                    st.markdown("**댓글**")
                     comments = eval(row["comments"]) if isinstance(row["comments"], str) else row["comments"]
                     if comments:
                         for c in comments:
