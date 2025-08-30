@@ -83,35 +83,30 @@ with tab1:
                         st.session_state[like_key] += 1
                         df.loc[i, "likes"] = st.session_state[like_key]  # df에도 즉시 반영
                         df.to_csv("posts.csv", index=False)
-
+                        
+                    # 글별 댓글 초기화
+                    if f"comments_{i}" not in st.session_state:
+                        st.session_state[f"comments_{i}"] = comments
+                    
+                    # 현재 댓글 가져오기
+                    comments = st.session_state[f"comments_{i}"]
+                    
                     # 댓글 표시
-                    st.subheader("💬 **댓글**")
-                    post_comments = comments_df[comments_df["post_title"] == row["title"]]
-                    if post_comments.empty:
-                        st.info("아직 댓글이 없습니다.")
+                    st.markdown("**댓글:**")
+                    if comments:
+                        for c in comments:
+                            st.write(f"- {c}")
                     else:
-                        for _, c in post_comments.iterrows():
-                            st.markdown(f"- **{c['author']}** ({c['date']}) : {c['comment']}")
-
-                    # 댓글 작성
-                    st.markdown("**댓글 작성하기**")
-                    comment_author = st.text_input(f"작성자 이름 ({row['title']})", key=f"author_{row['title']}")
-                    comment_text = st.text_area(f"댓글 내용 ({row['title']})", key=f"text_{row['title']}")
-                    if st.button("댓글 저장", key=f"btn_{row['title']}"):
-                        if comment_author.strip() == "" or comment_text.strip() == "":
-                            st.warning("작성자와 댓글 내용을 모두 입력해주세요!")
-                        else:
-                            new_comment = {
-                                "post_title": row["title"],
-                                "author": comment_author.strip(),
-                                "comment": comment_text.strip(),
-                                "date": datetime.now().strftime("%Y-%m-%d %H:%M")
-                            }
-                            comments_df = pd.concat([comments_df, pd.DataFrame([new_comment])], ignore_index=True)
-                            comments_df.to_csv(COMMENTS_FILE, index=False)
-                            st.success("✅ 댓글이 입력되었습니다! 새로고침 시 적용됩니다.")
-                            st.rerun()
-
+                        st.write("아직 댓글이 없습니다.")
+                    
+                    # 댓글 입력
+                    new_comment = st.text_input("댓글 작성", key=f"comment_input_{i}")
+                    if st.button("댓글 달기", key=f"comment_btn_{i}") and new_comment.strip() != "":
+                        comments.append(new_comment)
+                        st.session_state[f"comments_{i}"] = comments
+                        df.loc[i, "comments"] = str(comments)  # CSV에 저장
+                        df.to_csv("posts.csv", index=False)
+                        st.success("댓글이 추가되었습니다!")
 
                     # 수정 / 삭제
                     st.markdown("---")
