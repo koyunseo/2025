@@ -8,7 +8,7 @@ st.set_page_config(page_title="블로그", layout="wide")
 
 # --- 설정 파일 ---
 SETTINGS_FILE = "settings.json"
-DEFAULT_SETTINGS = {"blog_title": "📚 나만의 블로그"}
+DEFAULT_SETTINGS = {"blog_title": "📚 공유 블로그"}
 
 if os.path.exists(SETTINGS_FILE):
     with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
@@ -95,12 +95,12 @@ with tab1:
                     if st.button("✏️ 글 수정", key=f"edit_{i}"):
                         st.session_state["edit_index"] = i
                         st.session_state["edit_trigger"] = True
-                        st.success("글 수정 모드로 전환되었습니다!")
+                        st.success("글 수정 모드로 전환되었습니다! 글 작성 탭에서 수정 가능합니다.")
 
                     if st.button("🗑️ 글 삭제", key=f"delete_{i}"):
                         df = df.drop(i).reset_index(drop=True)
                         df.to_csv("posts.csv", index=False)
-                        st.success("글이 삭제되었습니다!")
+                        st.success("글이 삭제되었습니다! 새로고침 시 적용됩니다.")
 
 # --- 글 작성 탭 ---
 with tab2:
@@ -124,11 +124,11 @@ with tab2:
         content = st.text_area("내용")
         author = st.text_input("작성자 이름")
         existing_categories = df["category"].dropna().unique().tolist()
-        category = st.selectbox("카테고리 선택", existing_categories+["새 카테고리 추가"])
+        category = st.selectbox("카테고리 선택", existing_categories+["추가할 새 카테고리를 작성해주세요."])
         new_category = ""
         if category=="새 카테고리 추가":
             new_category = st.text_input("새 카테고리 이름 입력")
-        image = st.file_uploader("이미지 업로드", type=["png","jpg","jpeg"])
+        image = st.file_uploader("이미지 업로드'('최대 1개까지만 업로드 가능합니다.')'", type=["png","jpg","jpeg"])
 
     if st.button("글 저장하기"):
         if title.strip()=="" or content.strip()=="" or author.strip()=="":
@@ -151,7 +151,7 @@ with tab2:
                 if img_path:
                     df.loc[idx,"image"] = img_path
                 df.to_csv("posts.csv", index=False)
-                st.success("✅ 글이 수정되었습니다!")
+                st.success("✅ 글이 수정되었습니다! 새로고침 시 적용됩니다.")
                 st.session_state["edit_trigger"] = False
             else:
                 new_post = {
@@ -166,4 +166,4 @@ with tab2:
                 }
                 df = pd.concat([df,pd.DataFrame([new_post])], ignore_index=True)
                 df.to_csv("posts.csv", index=False)
-                st.success("✅ 글이 저장되었습니다! 글 목록 탭에서 확인하세요.")
+                st.success("✅ 글이 저장되었습니다! 새로고침 후 보기 탭에서 확인하세요.")
