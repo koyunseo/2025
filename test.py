@@ -56,12 +56,17 @@ with tab1:
         if selected_category != "전체":
             df = df[df["category"] == selected_category]
 
-        # 정렬 적용
-        if sort_order == "최신순":
+        # --- 정렬 옵션 ---
+        sort_option = st.selectbox("글 정렬 방식 선택", ["최신순", "오래된순", "좋아요순"])
+        if sort_option == "최신순":
+            df["date"] = pd.to_datetime(df["date"])
             df = df.sort_values("date", ascending=False)
-        elif sort_order == "오래된순":
+        elif sort_option == "오래된순":
+            df["date"] = pd.to_datetime(df["date"])
             df = df.sort_values("date", ascending=True)
-        elif sort_order == "좋아요순":
+        elif sort_option == "좋아요순":
+            if "likes" not in df.columns:
+                df["likes"] = 0
             df = df.sort_values("likes", ascending=False)
 
         if df.empty:
