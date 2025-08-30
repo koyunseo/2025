@@ -78,15 +78,17 @@ with tab1:
                     like_key = f"like_{i}"  # 글 고유 키
                     if like_key not in st.session_state:
                         st.session_state[like_key] = int(row["likes"])
-
-                    col1, col2 = st.columns([4, 4])  # 버튼과 안내 문구를 옆으로 배치
+                    # 좋아요 버튼과 안내 문구를 한 줄에 배치
+                    col1, col2 = st.columns([1, 3])  # 버튼:문구 비율을 1:3으로 조절
                     with col1:
-                        if st.button(f"👍 {st.session_state[like_key]}", key=f"like_btn_{i}"):
-                            st.session_state[like_key] += 1
-                            df.loc[i, "likes"] = st.session_state[like_key]
-                            df.to_csv("posts.csv", index=False)
+                    if st.button(f"👍 {st.session_state[like_key]}", key=f"like_btn_{i}"):
+                      st.session_state[like_key] += 1
+                      df.loc[i, "likes"] = st.session_state[like_key]
+                      df.to_csv("posts.csv", index=False)
+                      st.success("좋아요가 반영되었습니다!")
                     with col2:
-                        st.markdown("(두번 클릭 시 반영됩니다><)")
+                        st.markdown("<p style='margin-left:5px;'>_(두 번 클릭해야 반영될 수 있습니다)_</p>", unsafe_allow_html=True)
+                    
 
 
 
