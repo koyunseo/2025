@@ -128,7 +128,7 @@ with tab2:
         new_category = ""
         if category=="새 카테고리 추가":
             new_category = st.text_input("새 카테고리 이름 입력")
-        image = st.file_uploader("이미지 업로드'('최대 1개까지만 업로드 가능합니다.')'", type=["png","jpg","jpeg"])
+        image = st.file_uploader("이미지 업로드(최대 1장)", type=["png","jpg","jpeg"])
 
     if st.button("글 저장하기"):
         if title.strip()=="" or content.strip()=="" or author.strip()=="":
