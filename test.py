@@ -26,11 +26,6 @@ if st.button("제목 저장"):
             json.dump(settings, f, ensure_ascii=False)
         st.success("✅ 블로그 제목이 변경되었습니다! 새로고침 시 적용됩니다.")
 
-import streamlit as st
-import pandas as pd
-import os
-from datetime import datetime
-
 # --- CSV 초기화 ---
 if not os.path.exists("posts.csv"):
     df = pd.DataFrame(columns=["title","content","author","date","image","likes","comments"])
@@ -53,26 +48,9 @@ with tab1:
         categories = ["전체"] + sorted(df["category"].dropna().unique().tolist())
         selected_category = st.selectbox("카테고리 선택", categories)
 
-        # 정렬 선택
-        sort_order = st.radio("정렬 순서", ["최신순","오래된순","좋아요순"], horizontal=True)
-        df["date"] = pd.to_datetime(df["date"], errors="coerce")
-
         # 카테고리 필터링
         if selected_category != "전체":
             df = df[df["category"] == selected_category]
-
-        # --- 정렬 옵션 ---
-        sort_option = st.selectbox("글 정렬 방식 선택", ["최신순", "오래된순", "좋아요순"])
-        if sort_option == "최신순":
-            df["date"] = pd.to_datetime(df["date"])
-            df = df.sort_values("date", ascending=False)
-        elif sort_option == "오래된순":
-            df["date"] = pd.to_datetime(df["date"])
-            df = df.sort_values("date", ascending=True)
-        elif sort_option == "좋아요순":
-            if "likes" not in df.columns:
-                df["likes"] = 0
-            df = df.sort_values("likes", ascending=False)
 
         if df.empty:
             st.info("해당 카테고리에는 글이 없습니다.")
