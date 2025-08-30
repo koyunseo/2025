@@ -56,10 +56,16 @@ with tab1:
         categories = ["전체"] + sorted(df["category"].dropna().unique().tolist())
         selected_category = st.selectbox("카테고리 선택", categories)
 
-        # 정렬 방식 선택
-        sort_order = st.radio("정렬 순서", ["최신순", "오래된순"], horizontal=True)
+        # 정렬 방식 선택 (좋아요순 추가)
+        sort_order = st.radio("정렬 순서", ["최신순", "오래된순", "좋아요순"], horizontal=True)
         df["date"] = pd.to_datetime(df["date"], errors="coerce")
-        df = df.sort_values("date", ascending=(sort_order == "오래된순"))
+
+        if sort_order == "최신순":
+            df = df.sort_values("date", ascending=False)
+        elif sort_order == "오래된순":
+            df = df.sort_values("date", ascending=True)
+        elif sort_order == "좋아요순":
+            df = df.sort_values("likes", ascending=False)
 
         if selected_category != "전체":
             df = df[df["category"] == selected_category]
