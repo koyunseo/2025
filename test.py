@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 import os
+import json
 from datetime import datetime
-st.set_page_config(page_title="블로그", layout="wide")
 
 # --- 설정 파일 ---
 SETTINGS_FILE = "settings.json"
@@ -25,6 +25,11 @@ if st.button("제목 저장"):
         with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
             json.dump(settings, f, ensure_ascii=False)
         st.success("✅ 블로그 제목이 변경되었습니다! 새로고침 시 적용됩니다.")
+
+import streamlit as st
+import pandas as pd
+import os
+from datetime import datetime
 
 # --- CSV 초기화 ---
 if not os.path.exists("posts.csv"):
