@@ -85,10 +85,8 @@ with tab1:
                             st.session_state[like_key] += 1
                             df.loc[i, "likes"] = st.session_state[like_key]
                             df.to_csv("posts.csv", index=False)
-                            st.success("좋아요가 반영되었습니다!")
-
                     with col2:
-                        st.markdown("_(두 번 클릭해야 반영될 수 있습니다)_")
+                        st.markdown("(두번 클릭 시 반영됩니다><)")
 
 
 
