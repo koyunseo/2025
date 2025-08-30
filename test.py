@@ -75,12 +75,11 @@ with tab1:
                     st.write(row["content"])
 
                     # 좋아요 표시
-                    st.write("좋아요를 눌러주세요. (두 번 클릭해야 반영될 수 있습니다)")
                     like_key = f"like_{i}"  # 각 글 고유 키
                     if like_key not in st.session_state:
                         st.session_state[like_key] = int(row["likes"])
                     
-                    if st.button(f"👍 좋아요 ({st.session_state[like_key]})", key=f"like_btn_{i}"):
+                    if st.button(f"👍 두번 클릭! ({st.session_state[like_key]})", key=f"like_btn_{i}"):
                         st.session_state[like_key] += 1
                         df.loc[i, "likes"] = st.session_state[like_key]  # df에도 즉시 반영
                         df.to_csv("posts.csv", index=False)
