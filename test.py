@@ -28,10 +28,12 @@ if st.button("제목 저장"):
             json.dump(settings, f, ensure_ascii=False)
         st.success("✅ 블로그 제목이 변경되었습니다! 새로고침 시 적용됩니다.")
 
-# --- 게시글 CSV 초기화 ---
+# --- CSV 초기화 ---
 if not os.path.exists("posts.csv"):
-    df = pd.DataFrame(columns=["title","content","author","category","date","image","likes","comments"])
+    df = pd.DataFrame(columns=["title","content","author","date","image","likes","comments"])
     df.to_csv("posts.csv", index=False)
+
+df = pd.read_csv("posts.csv")
 
 # --- 탭 정의 ---
 tab1, tab2 = st.tabs(["글 보기", "글 작성"])
