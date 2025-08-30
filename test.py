@@ -78,7 +78,6 @@ with tab1:
                     if st.button(f"👍 좋아요 ({int(row['likes'])})", key=f"like_{i}"):
                         df.loc[i,"likes"] += 1
                         df.to_csv("posts.csv", index=False)
-                        st.success("좋아요가 반영되었습니다!")
 
                     # 댓글
                     st.markdown("**댓글:**")
