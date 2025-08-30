@@ -2,8 +2,6 @@ import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
-import json
-
 st.set_page_config(page_title="블로그", layout="wide")
 
 # --- 설정 파일 ---
