@@ -75,15 +75,15 @@ with tab1:
                     st.write(row["content"])
 
                     # 좋아요
-like_key = f"like_{i}"  # 각 글 고유 키
-if like_key not in st.session_state:
-    st.session_state[like_key] = int(row["likes"])
+                    like_key = f"like_{i}"  # 각 글 고유 키
+                    if like_key not in st.session_state:
+                        st.session_state[like_key] = int(row["likes"])
 
-if st.button(f"👍 좋아요 ({st.session_state[like_key]})", key=f"like_btn_{i}"):
-    st.session_state[like_key] += 1
-    df.loc[i, "likes"] = st.session_state[like_key]  #df에도 즉시 반영
-    df.to_csv("posts.csv", index=False)
-    st.success("좋아요가 반영되었습니다!")
+                    if st.button(f"👍 좋아요 ({st.session_state[like_key]})", key=f"like_btn_{i}"):
+                        st.session_state[like_key] += 1
+                        df.loc[i, "likes"] = st.session_state[like_key]  #df에도 즉시 반영
+                        df.to_csv("posts.csv", index=False)
+                        st.success("좋아요가 반영되었습니다!")
 
 
                     # 댓글
