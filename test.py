@@ -84,19 +84,25 @@ with tab1:
                         df.loc[i, "likes"] = st.session_state[like_key]  # df에도 즉시 반영
                         df.to_csv("posts.csv", index=False)
 
-                    # 댓글
-                    st.markdown("**댓글**")
-                    comments = eval(row["comments"]) if isinstance(row["comments"], str) else row["comments"]
+                    # 댓글 표시
+                    st.markdown("**댓글:**")
+                    if f"comments_{i}" not in st.session_state:
+                        st.session_state[f"comments_{i}"] = eval(row["comments"]) if isinstance(row["comments"], str) else row["comments"]
+                        
+                    comments = st.session_state[f"comments_{i}"]
+                    
                     if comments:
                         for c in comments:
                             st.write(f"- {c}")
                     else:
                         st.write("아직 댓글이 없습니다.")
-
+                    
+                    # 댓글 입력
                     new_comment = st.text_input("댓글 작성", key=f"comment_input_{i}")
-                    if st.button("댓글 달기", key=f"comment_btn_{i}") and new_comment.strip()!="":
+                    if st.button("댓글 달기", key=f"comment_btn_{i}") and new_comment.strip() != "":
                         comments.append(new_comment)
-                        df.loc[i,"comments"] = str(comments)
+                        st.session_state[f"comments_{i}"] = comments  # 세션 상태에 바로 반영
+                        df.loc[i, "comments"] = str(comments)        # CSV에도 저장
                         df.to_csv("posts.csv", index=False)
                         st.success("댓글이 추가되었습니다!")
 
