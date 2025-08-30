@@ -59,12 +59,12 @@ with tab1:
             st.info("해당 카테고리에는 글이 없습니다.")
         else:
             for _, row in df.iterrows():
-                st.subheader(row["title"])
-                st.caption(f"작성자: {row['author']} | 작성일: {row['date']} | 카테고리: {row['category']}")
-                if isinstance(row["image"], str) and row["image"] and os.path.exists(row["image"]):
-                    st.image(row["image"], use_container_width=True)  # 최신 API 적용
-                st.write(row["content"])
-                st.markdown("---")
+                with st.expander(row["title"]):  # 제목만 표시, 클릭 시 내용 보임
+                    st.caption(f"작성자: {row['author']} | 작성일: {row['date']} | 카테고리: {row['category']}")
+                    if isinstance(row["image"], str) and row["image"] and os.path.exists(row["image"]):
+                        st.image(row["image"], use_container_width=True)
+                    st.write(row["content"])
+
 
 # --- 글 작성 ---
 with tab2:
