@@ -32,11 +32,17 @@ if st.button("제목 저장"):
         with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
             json.dump(settings, f, ensure_ascii=False)
         st.success("✅ 블로그 제목이 변경되었습니다! 새로고침하면 반영됩니다.")
-        st.rerun()  # 최신 Streamlit에서는 st.experimental_rerun() 대신 st.rerun()
+        st.rerun()
 
 # --- 게시글 CSV 초기화 ---
 if not os.path.exists(POSTS_FILE):
-    pd.DataFrame(columns=["title", "content", "author", "category", "date", "image"]).to_csv(POSTS_FILE, index=False)
+    pd.DataFrame(columns=["title", "content", "author", "category", "date", "image", "likes"]).to_csv(POSTS_FILE, index=False)
+
+# 기존 파일에 likes 없으면 추가
+df_posts = pd.read_csv(POSTS_FILE)
+if "likes" not in df_posts.columns:
+    df_posts["likes"] = 0
+    df_posts.to_csv(POSTS_FILE, index=False)
 
 # --- 댓글 CSV 초기화 ---
 if not os.path.exists(COMMENTS_FILE):
@@ -63,13 +69,25 @@ with tab1:
         if df.empty:
             st.info("해당 카테고리에는 글이 없습니다.")
         else:
-            for _, row in df.iterrows():
+            for idx, row in df.iterrows():
                 expander_label = f"{row['title']}  |  {row['author']}"
                 with st.expander(expander_label):
                     st.caption(f"작성일: {row['date']} | 카테고리: {row['category']}")
                     if isinstance(row["image"], str) and row["image"] and os.path.exists(row["image"]):
                         st.image(row["image"], use_container_width=True)
                     st.write(row["content"])
+                    st.markdown("---")
+
+                    # --- 좋아요 기능 ---
+                    col1, col2 = st.columns([1,4])
+                    with col1:
+                        if st.button("👍 좋아요", key=f"like_{idx}"):
+                            df.loc[idx, "likes"] = int(row["likes"]) + 1
+                            df.to_csv(POSTS_FILE, index=False)
+                            st.rerun()
+                    with col2:
+                        st.write(f"좋아요 수 : {int(row['likes'])}")
+
                     st.markdown("---")
 
                     # --- 댓글 표시 ---
@@ -83,9 +101,9 @@ with tab1:
 
                     # --- 댓글 작성 ---
                     st.markdown("**댓글 작성하기**")
-                    comment_author = st.text_input(f"작성자 이름 ({row['title']})", key=f"author_{row['title']}")
-                    comment_text = st.text_area(f"댓글 내용 ({row['title']})", key=f"text_{row['title']}")
-                    if st.button("댓글 저장", key=f"btn_{row['title']}"):
+                    comment_author = st.text_input(f"작성자 이름 ({row['title']})", key=f"author_{idx}")
+                    comment_text = st.text_area(f"댓글 내용 ({row['title']})", key=f"text_{idx}")
+                    if st.button("댓글 저장", key=f"btn_{idx}"):
                         if comment_author.strip() == "" or comment_text.strip() == "":
                             st.warning("작성자와 댓글 내용을 모두 입력해주세요!")
                         else:
@@ -135,7 +153,8 @@ with tab2:
                 "author": author,
                 "category": final_category,
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                "image": img_path
+                "image": img_path,
+                "likes": 0
             }
             df = pd.concat([df, pd.DataFrame([new_post])], ignore_index=True)
             df.to_csv(POSTS_FILE, index=False)
