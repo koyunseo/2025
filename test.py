@@ -106,7 +106,7 @@ with tab1:
                         st.session_state[f"comments_{i}"] = comments
                         df.loc[i, "comments"] = str(comments)  # CSV에 저장
                         df.to_csv("posts.csv", index=False)
-                        st.success("댓글이 추가되었습니다!")
+                        st.success("댓글이 추가되었습니다! 새로고침 시 적용됩니다.")
 
                     # 수정 / 삭제
                     st.markdown("---")
