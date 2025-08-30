@@ -44,26 +44,32 @@ with tab1:
     if df.empty:
         st.info("아직 작성된 글이 없습니다.")
     else:
+        # 카테고리 선택
         categories = ["전체"] + sorted(df["category"].dropna().unique().tolist())
         selected_category = st.selectbox("카테고리 선택", categories)
 
+        # 정렬 선택
         sort_order = st.radio("정렬 순서", ["최신순","오래된순","좋아요순"], horizontal=True)
         df["date"] = pd.to_datetime(df["date"], errors="coerce")
-        if sort_order=="최신순":
-            df = df.sort_values("date", ascending=False)
-        elif sort_order=="오래된순":
-            df = df.sort_values("date", ascending=True)
-        elif sort_order=="좋아요순":
-            df = df.sort_values("likes", ascending=False)
 
+        # 카테고리 필터링
         if selected_category != "전체":
-            df = df[df["category"]==selected_category]
+            df = df[df["category"] == selected_category]
+
+        # 정렬 적용
+        if sort_order == "최신순":
+            df = df.sort_values("date", ascending=False)
+        elif sort_order == "오래된순":
+            df = df.sort_values("date", ascending=True)
+        elif sort_order == "좋아요순":
+            df = df.sort_values("likes", ascending=False)
 
         if df.empty:
             st.info("해당 카테고리에는 글이 없습니다.")
         else:
             for i, row in df.iterrows():
                 with st.expander(f"{row['title']} (작성자: {row['author']})", expanded=False):
+                    # 이미지 표시
                     if isinstance(row["image"], str) and row["image"] and os.path.exists(row["image"]):
                         st.image(row["image"], use_container_width=True)
                     st.write(row["content"])
