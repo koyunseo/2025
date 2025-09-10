@@ -4,6 +4,24 @@ import os
 import json
 from datetime import datetime
 
+# --- 게시글 CSV 초기화 ---
+if not os.path.exists("posts.csv"):
+    df = pd.DataFrame(columns=["title", "content", "author", "category", "date", "image", "likes", "comments"])
+    df.to_csv("posts.csv", index=False)
+else:
+    df = pd.read_csv("posts.csv")
+
+    # ✅ 누락된 컬럼 자동 추가
+    for col in ["title", "content", "author", "category", "date", "image", "likes", "comments"]:
+        if col not in df.columns:
+            if col == "likes":
+                df[col] = 0
+            elif col == "comments":
+                df[col] = "[]"
+            else:
+                df[col] = ""
+    df.to_csv("posts.csv", index=False)
+
 # --- 설정 파일 ---
 SETTINGS_FILE = "settings.json"
 DEFAULT_SETTINGS = {"blog_title": "📚 공유 블로그"}
