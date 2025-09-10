@@ -143,56 +143,45 @@ with tab2:
         title = st.text_input("제목", row["title"])
         content = st.text_area("내용", row["content"])
         author = st.text_input("작성자 이름", row["author"])
+
+        # ✅ 기존 카테고리 + 새 카테고리 추가 옵션
         existing_categories = df["category"].dropna().unique().tolist()
-        category = st.selectbox("카테고리 선택", existing_categories+["새 카테고리 추가"],
-                                index=existing_categories.index(row["category"]) if row["category"] in existing_categories else 0)
+        category = st.selectbox(
+            "카테고리 선택",
+            existing_categories + ["새 카테고리 추가"],
+            index=existing_categories.index(row["category"]) if row["category"] in existing_categories else 0
+        )
         new_category = ""
-        image = st.file_uploader("이미지 업로드", type=["png","jpg","jpeg"])
+        if category == "새 카테고리 추가":
+            new_category = st.text_input("새 카테고리 이름 입력")
+
+        image = st.file_uploader("이미지 업로드", type=["png", "jpg", "jpeg"])
+
     else:
         title = st.text_input("제목")
         content = st.text_area("내용")
         author = st.text_input("작성자 이름")
+
+        # ✅ 기존 카테고리 + 새 카테고리 추가 옵션
         existing_categories = df["category"].dropna().unique().tolist()
-        category = st.selectbox("카테고리 선택", existing_categories+["추가할 새 카테고리를 작성해주세요."])
+        category = st.selectbox("카테고리 선택", existing_categories + ["새 카테고리 추가"])
+
         new_category = ""
-        if category=="새 카테고리 추가":
+        if category == "새 카테고리 추가":
             new_category = st.text_input("새 카테고리 이름 입력")
-        image = st.file_uploader("이미지 업로드(최대 1장)", type=["png","jpg","jpeg"])
+
+        image = st.file_uploader("이미지 업로드(최대 1장)", type=["png", "jpg", "jpeg"])
 
     if st.button("글 저장하기"):
-        if title.strip()=="" or content.strip()=="" or author.strip()=="":
+        if title.strip() == "" or content.strip() == "" or author.strip() == "":
             st.warning("제목, 내용, 작성자를 모두 입력해야 합니다!")
         else:
-            final_category = new_category if category=="새 카테고리 추가" else category
-            img_path = ""
-            if image is not None:
-                os.makedirs("images", exist_ok=True)
-                img_path = os.path.join("images", image.name)
-                with open(img_path, "wb") as f:
-                    f.write(image.getbuffer())
-
-            if "edit_trigger" in st.session_state and st.session_state.get("edit_trigger",False):
-                idx = st.session_state["edit_index"]
-                df.loc[idx,"title"] = title
-                df.loc[idx,"content"] = content
-                df.loc[idx,"author"] = author
-                df.loc[idx,"category"] = final_category
-                if img_path:
-                    df.loc[idx,"image"] = img_path
-                df.to_csv("posts.csv", index=False)
-                st.success("✅ 글이 수정되었습니다! 새로고침 시 적용됩니다.")
-                st.session_state["edit_trigger"] = False
+            # ✅ 새 카테고리 로직
+            if category == "새 카테고리 추가":
+                if new_category.strip() == "":
+                    st.warning("새 카테고리 이름을 입력해주세요!")
+                    st.stop()
+                final_category = new_category.strip()
             else:
-                new_post = {
-                    "title": title,
-                    "content": content,
-                    "author": author,
-                    "category": final_category,
-                    "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                    "image": img_path,
-                    "likes": 0,
-                    "comments": []
-                }
-                df = pd.concat([df,pd.DataFrame([new_post])], ignore_index=True)
-                df.to_csv("posts.csv", index=False)
-                st.success("✅ 글이 저장되었습니다! 새로고침 후 보기 탭에서 확인하세요.")
+                final_category = category
+
